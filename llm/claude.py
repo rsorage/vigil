@@ -1,4 +1,3 @@
-import json
 import logging
 
 import anthropic
@@ -9,8 +8,6 @@ from llm.base import LLMProvider
 
 logger = logging.getLogger(__name__)
 
-# The analysis tool schema — Claude is asked to call this with its findings,
-# giving us reliably structured output without fragile JSON parsing.
 _ANALYSIS_TOOL = {
     "name": "report_error_analysis",
     "description": "Report the structured analysis of a backend error.",
@@ -99,6 +96,22 @@ def _build_user_message(error: ErrorRecord, code_context: str | None) -> str:
     return "\n".join(parts)
 
 
+def _extract_field(data: dict, *keys: str, default: str = "") -> str:
+    """
+    Try multiple key name variants in order, return first match.
+    Logs a warning if none are found — helps diagnose model key name drift.
+    """
+    for k in keys:
+        if k in data:
+            return data[k]
+    logger.warning(
+        "None of expected keys %s found in tool response. Got: %s",
+        keys,
+        list(data.keys()),
+    )
+    return default
+
+
 class ClaudeProvider(LLMProvider):
     def __init__(self) -> None:
         self._client = anthropic.Anthropic(api_key=config.anthropic_api_key)
@@ -118,11 +131,10 @@ class ClaudeProvider(LLMProvider):
             max_tokens=1024,
             system=_SYSTEM_PROMPT,
             tools=[_ANALYSIS_TOOL],
-            tool_choice={"type": "any"},  # force tool use — no free-form text
+            tool_choice={"type": "any"},
             messages=[{"role": "user", "content": user_message}],
         )
 
-        # Extract the tool_use block
         tool_block = next(
             (block for block in response.content if block.type == "tool_use"),
             None,
@@ -133,23 +145,34 @@ class ClaudeProvider(LLMProvider):
                 "Claude did not call the analysis tool for error %s — falling back",
                 error.fingerprint,
             )
-            return ErrorAnalysis(
-                short_description="Analysis unavailable",
-                root_cause="The LLM did not return a structured analysis.",
-                suggested_fix="Review the error manually.",
-                confidence="low",
-            )
+            return self._fallback()
 
         data = tool_block.input
+        logger.debug("Raw tool input for %s: %s", error.fingerprint, data)
+
+        short_description = _extract_field(data, "short_description", "shortDescription", "description")
+        root_cause        = _extract_field(data, "root_cause", "rootCause", "cause")
+        suggested_fix     = _extract_field(data, "suggested_fix", "suggestedFix", "fix", "suggestion")
+        confidence        = _extract_field(data, "confidence", default="medium")
+
         logger.info(
-            "Analysis complete for %s (confidence: %s)",
+            "Analysis complete for %s (confidence: %s) — %s",
             error.fingerprint,
-            data.get("confidence"),
+            confidence,
+            short_description,
         )
 
         return ErrorAnalysis(
-            short_description=data["short_description"],
-            root_cause=data["root_cause"],
-            suggested_fix=data["suggested_fix"],
-            confidence=data["confidence"],
+            short_description=short_description,
+            root_cause=root_cause,
+            suggested_fix=suggested_fix,
+            confidence=confidence,
+        )
+
+    def _fallback(self) -> ErrorAnalysis:
+        return ErrorAnalysis(
+            short_description="Analysis unavailable",
+            root_cause="The LLM did not return a structured analysis.",
+            suggested_fix="Review the error manually.",
+            confidence="low",
         )
