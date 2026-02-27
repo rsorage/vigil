@@ -1,7 +1,7 @@
 """
 Hourly entry point.
 Runs every hour via cron:
-  0 * * * * cd /home/ubuntu/log-analyzer && .venv/bin/python hourly.py
+  0 * * * * cd /home/ubuntu/vigil && uv run python hourly.py >> /home/ubuntu/vigil/logs/hourly.log 2>&1
 """
 import logging
 import sys
@@ -11,6 +11,7 @@ from analyzer.deduplicator import deduplicate
 from analyzer.parser import filter_errors, parse_logs
 from analyzer.state_manager import mark_stale_inactive, persist_errors
 from config import config
+from reporting.renderer import write_digest
 from storage import Database
 
 logging.basicConfig(
@@ -51,6 +52,11 @@ def main() -> None:
 
     # 5. Deactivate errors not seen in the last 48h
     mark_stale_inactive(db)
+
+    # 6. Re-render today's report from current DB state — no LLM call,
+    #    just a fresh snapshot so the browser always shows the latest picture.
+    report_path = write_digest(db.get_all_active())
+    logger.info("Report refreshed at %s", report_path)
 
     logger.info("Hourly run complete")
 
