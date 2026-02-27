@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vigil — {{ report_date }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0b0e13;
+      --bg-card:   #111620;
+      --bg-code:   #090c10;
+      --border:    #1e2535;
+      --border-hi: #2a3348;
+      --text:      #c9d1e0;
+      --text-dim:  #5a6478;
+      --text-hi:   #edf0f7;
+      --amber:     #f0a500;
+      --amber-dim: #7a5200;
+      --red:       #e05252;
+      --red-dim:   #5c1f1f;
+      --green:     #3ecf8e;
+      --green-dim: #0f3d28;
+      --blue:      #4d8ef0;
+      --blue-dim:  #152444;
+      --mono:      'IBM Plex Mono', monospace;
+      --sans:      'Outfit', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--amber);
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--text-dim); }
+    .report-date {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-dim);
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .generated-at {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ── Summary bar ── */
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      background: var(--bg);
+      padding: 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 500;
+      color: var(--text-hi);
+      line-height: 1;
+    }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.red   { color: var(--red); }
+    .stat-value.green { color: var(--green); }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Main layout ── */
+    .main { padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Error cards ── */
+    .error-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      animation: fadeUp 0.3s ease both;
+    }
+    .error-card:nth-child(2) { animation-delay: 0.05s; }
+    .error-card:nth-child(3) { animation-delay: 0.10s; }
+    .error-card:nth-child(4) { animation-delay: 0.15s; }
+    .error-card:nth-child(5) { animation-delay: 0.20s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+    .logger-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--amber);
+      word-break: break-all;
+    }
+    .file-ref {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .file-ref span { color: var(--blue); }
+
+    .card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .badge-count {
+      background: var(--border);
+      color: var(--text);
+    }
+    .badge-high     { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-medium   { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
+    .badge-low      { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
+    .badge-new      { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
+    .badge-analyzed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-inactive { background: var(--border);    color: var(--text-dim); }
+
+    /* ── Card body ── */
+    .card-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+    .message-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .meta-row span { color: var(--text); }
+
+    /* ── Analysis section ── */
+    .analysis { display: flex; flex-direction: column; gap: 14px; }
+    .analysis-row { display: flex; flex-direction: column; gap: 6px; }
+    .analysis-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+    .analysis-text {
+      font-size: 14px;
+      color: var(--text-hi);
+      line-height: 1.65;
+    }
+    .analysis-fix {
+      background: var(--bg-code);
+      border-left: 3px solid var(--green);
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--text-hi);
+      line-height: 1.65;
+      border-radius: 0 4px 4px 0;
+      white-space: pre-wrap;
+    }
+
+    .no-analysis {
+      font-size: 13px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    /* ── Collapsible traceback ── */
+    .traceback-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.15s, color 0.15s;
+      align-self: flex-start;
+    }
+    .traceback-toggle:hover { border-color: var(--border-hi); color: var(--text); }
+    .traceback-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+    .traceback-toggle.open .arrow { transform: rotate(90deg); }
+
+    .traceback-block {
+      display: none;
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .traceback-block.open { display: block; }
+    .traceback-block .tb-file   { color: var(--blue); }
+    .traceback-block .tb-error  { color: var(--red); }
+
+    /* ── Divider inside card ── */
+    .card-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 -20px;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 14px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 48px;
+      padding: 20px 40px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .footer a { color: var(--amber); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">vigil<span>//</span>digest</div>
+    <div class="report-date">{{ report_date }}</div>
+  </div>
+  <div class="generated-at">generated {{ generated_at }}</div>
+</header>
+
+<!-- Summary bar -->
+<div class="summary">
+  <div class="stat">
+    <div class="stat-value {% if total_unique > 0 %}amber{% endif %}">{{ total_unique }}</div>
+    <div class="stat-label">Unique errors</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">{{ total_occurrences }}</div>
+    <div class="stat-label">Total occurrences</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value {% if total_analyzed > 0 %}green{% endif %}">{{ total_analyzed }}</div>
+    <div class="stat-label">Analyzed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value {% if total_pending > 0 %}red{% endif %}">{{ total_pending }}</div>
+    <div class="stat-label">Pending analysis</div>
+  </div>
+</div>
+
+<!-- Error list -->
+<main class="main">
+  {% if errors %}
+  <div class="section-label">{{ errors|length }} active error{{ 's' if errors|length != 1 }} — sorted by occurrence count</div>
+
+  {% for error in errors %}
+  <div class="error-card">
+
+    <!-- Card header -->
+    <div class="card-header">
+      <div class="card-header-left">
+        <div class="logger-name">{{ error.logger_name }}</div>
+        {% if error.file_path %}
+        <div class="file-ref">
+          {{ error.file_path }}<span>:{{ error.line_number }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-badges">
+        <span class="badge badge-count">×{{ error.occurrence_count }}</span>
+        {% if error.analysis %}
+          <span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>
+        {% endif %}
+        <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
+      </div>
+    </div>
+
+    <!-- Card body -->
+    <div class="card-body">
+
+      <!-- Message -->
+      <div class="message-block">{{ error.message_template }}</div>
+
+      <!-- Meta -->
+      <div class="meta-row">
+        <div>first seen <span>{{ error.first_seen.strftime('%Y-%m-%d %H:%M') if error.first_seen else '—' }}</span></div>
+        <div>last seen <span>{{ error.last_seen.strftime('%Y-%m-%d %H:%M') if error.last_seen else '—' }}</span></div>
+        <div>fingerprint <span>{{ error.fingerprint }}</span></div>
+      </div>
+
+      {% if error.sample_traceback %}
+      <div class="card-divider"></div>
+
+      <!-- Traceback (collapsible) -->
+      <button class="traceback-toggle" onclick="toggleTraceback(this)">
+        <span class="arrow">▶</span> traceback
+      </button>
+      <div class="traceback-block">{{ error.sample_traceback }}</div>
+      {% endif %}
+
+      {% if error.analysis %}
+      <div class="card-divider"></div>
+
+      <!-- LLM analysis -->
+      <div class="analysis">
+        <div class="analysis-row">
+          <div class="analysis-label">What happened</div>
+          <div class="analysis-text">{{ error.analysis.short_description }}</div>
+        </div>
+        <div class="analysis-row">
+          <div class="analysis-label">Root cause</div>
+          <div class="analysis-text">{{ error.analysis.root_cause }}</div>
+        </div>
+        <div class="analysis-row">
+          <div class="analysis-label">Suggested fix</div>
+          <div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div>
+        </div>
+      </div>
+      {% else %}
+      <div class="card-divider"></div>
+      <div class="no-analysis">No analysis available yet.</div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endfor %}
+
+  {% else %}
+  <div class="empty">// no active errors — all clear</div>
+  {% endif %}
+</main>
+
+<footer class="footer">
+  vigil &mdash; <a href="index.html">all reports</a>
+</footer>
+
+<script>
+  function toggleTraceback(btn) {
+    btn.classList.toggle('open');
+    const block = btn.nextElementSibling;
+    block.classList.toggle('open');
+  }
+</script>
+</body>
+</html>

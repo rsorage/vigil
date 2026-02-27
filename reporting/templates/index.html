@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vigil — Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e13; --bg-card: #111620; --border: #1e2535;
+      --text: #c9d1e0; --text-dim: #5a6478; --text-hi: #edf0f7;
+      --amber: #f0a500;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Outfit', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+    .header { border-bottom: 1px solid var(--border); padding: 28px 40px; }
+    .logo { font-family: var(--mono); font-size: 18px; color: var(--amber); }
+    .logo span { color: var(--text-dim); }
+    .main { padding: 32px 40px; max-width: 600px; }
+    .section-label {
+      font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    .report-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .report-list li a {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: 4px;
+      font-family: var(--mono); font-size: 14px; color: var(--text);
+      text-decoration: none; transition: background 0.15s;
+    }
+    .report-list li a:hover { background: var(--bg-card); color: var(--text-hi); }
+    .report-list li a::before { content: '//'; color: var(--amber); }
+    .empty { font-family: var(--mono); font-size: 14px; color: var(--text-dim); padding: 24px 0; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">vigil<span>//</span>reports</div>
+  </header>
+  <main class="main">
+    <div class="section-label">all digests</div>
+    {% if reports %}
+    <ul class="report-list">
+      {% for name in reports %}
+      <li><a href="{{ name }}">{{ name.replace('.html', '') }}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty">// no reports yet — run digest.py to generate one</div>
+    {% endif %}
+  </main>
+</body>
+</html>

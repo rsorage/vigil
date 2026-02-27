@@ -2,14 +2,13 @@
 Daily digest entry point.
 Runs once daily via cron:
   0 18 * * * cd /home/ubuntu/vigil && .venv/bin/python digest.py
-
-Phase 6 will add: render HTML report → write to reports/
 """
 import logging
 import sys
 
 from analyzer.code_reader import read_context_for_error
 from llm import get_provider
+from reporting.renderer import write_digest
 from storage import Database
 from storage.models import ErrorStatus
 
@@ -63,7 +62,6 @@ def analyze_new_errors(db: Database) -> int:
             )
 
         except Exception as e:
-            # Don't let one failed analysis abort the rest
             logger.error("  [%s] analysis failed: %s", error.fingerprint, e)
 
     return analyzed
@@ -86,8 +84,8 @@ def main() -> None:
         len(new_remaining),
     )
 
-    # Phase 6: render HTML report
-    logger.info("HTML report rendering coming in Phase 6")
+    report_path = write_digest(active)
+    logger.info("Report available at %s", report_path)
 
 
 if __name__ == "__main__":
