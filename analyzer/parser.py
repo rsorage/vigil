@@ -26,6 +26,9 @@ _TRACEBACK_FILE_RE = re.compile(
 # "api-1  | " or "api-prod-1  | "
 _PREFIX_RE = re.compile(r"^\S+-\d+\s+\|\s+")
 
+# Path fragments that indicate a venv or stdlib frame — not app code
+_VENV_PATH_FRAGMENTS = (".venv", "site-packages", "dist-packages")
+
 
 def _strip_prefix(line: str) -> str:
     return _PREFIX_RE.sub("", line)
@@ -35,14 +38,28 @@ def _parse_timestamp(raw: str) -> datetime:
     return datetime.strptime(raw, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
 
 
+def _is_app_frame(path: str) -> bool:
+    """Return True if the path belongs to app code rather than venv/stdlib."""
+    return not any(fragment in path for fragment in _VENV_PATH_FRAGMENTS)
+
+
 def _extract_traceback_location(traceback: str) -> tuple[Optional[str], Optional[int]]:
     """
-    Return the (file_path, line_number) of the *innermost* frame in a traceback,
-    i.e. the last File "..." line — that's where the error actually occurred.
+    Return the (file_path, line_number) of the innermost *app* frame in a
+    traceback — the last File "..." line that is not inside .venv or
+    site-packages. Falls back to the absolute innermost frame if no app
+    frame exists (e.g. error originates entirely inside a library).
     """
     matches = _TRACEBACK_FILE_RE.findall(traceback)
     if not matches:
         return None, None
+
+    # Walk from innermost (last) outward, return first app frame found
+    for path, line in reversed(matches):
+        if _is_app_frame(path):
+            return path, int(line)
+
+    # Fallback: no app frame found, use absolute innermost
     path, line = matches[-1]
     return path, int(line)
 
