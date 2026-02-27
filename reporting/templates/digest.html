@@ -52,73 +52,95 @@
       z-index: 10;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
-    .logo {
-      font-family: var(--mono);
-      font-size: 18px;
-      font-weight: 500;
-      color: var(--amber);
-      letter-spacing: -0.02em;
-    }
+    .logo { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--amber); letter-spacing: -0.02em; }
     .logo span { color: var(--text-dim); }
-    .report-date {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text-dim);
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-    }
-    .generated-at {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-    }
+    .report-date { font-family: var(--mono); font-size: 13px; color: var(--text-dim); padding: 4px 10px; border: 1px solid var(--border); border-radius: 4px; }
+    .generated-at { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
 
     /* ── Summary bar ── */
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .stat {
-      background: var(--bg);
-      padding: 20px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .stat-value {
-      font-family: var(--mono);
-      font-size: 32px;
-      font-weight: 500;
-      color: var(--text-hi);
-      line-height: 1;
-    }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+    .stat { background: var(--bg); padding: 20px 32px; display: flex; flex-direction: column; gap: 4px; cursor: default; }
+    .stat-value { font-family: var(--mono); font-size: 32px; font-weight: 500; color: var(--text-hi); line-height: 1; }
     .stat-value.amber { color: var(--amber); }
     .stat-value.red   { color: var(--red); }
     .stat-value.green { color: var(--green); }
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
+    .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* ── Controls bar ── */
+    .controls {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 40px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      background: var(--bg);
     }
-
-    /* ── Main layout ── */
-    .main { padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
-
-    .section-label {
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .control-label {
       font-family: var(--mono);
       font-size: 11px;
       color: var(--text-dim);
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.07em;
+      white-space: nowrap;
     }
+    .pill-group { display: flex; gap: 2px; }
+    .pill {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.12s;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: var(--border-hi); color: var(--text); }
+    .pill.active {
+      background: var(--border-hi);
+      border-color: var(--border-hi);
+      color: var(--text-hi);
+    }
+    .pill.active.rising  { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
+    .pill.active.falling { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.stable  { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
+    .pill.active.new     { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
+    .pill.active.analyzed{ background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.high    { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.medium  { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+    .pill.active.low     { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
+
+    .controls-right { margin-left: auto; }
+    .sort-select {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+    .sort-select:focus { border-color: var(--border-hi); }
+
+    .results-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .results-count span { color: var(--text); }
+
+    /* ── Main layout ── */
+    .main { padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
 
     /* ── Error cards ── */
     .error-card {
@@ -128,188 +150,79 @@
       margin-bottom: 16px;
       overflow: hidden;
       animation: fadeUp 0.3s ease both;
+      transition: opacity 0.15s, transform 0.15s;
     }
-    .error-card:nth-child(2) { animation-delay: 0.05s; }
-    .error-card:nth-child(3) { animation-delay: 0.10s; }
-    .error-card:nth-child(4) { animation-delay: 0.15s; }
-    .error-card:nth-child(5) { animation-delay: 0.20s; }
+    .error-card.hidden { display: none; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .card-header {
-      padding: 16px 20px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-      border-bottom: 1px solid var(--border);
-    }
+    .card-header { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); }
     .card-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-
-    .logger-name {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--amber);
-      word-break: break-all;
-    }
-    .file-ref {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-    }
+    .logger-name { font-family: var(--mono); font-size: 13px; color: var(--amber); word-break: break-all; }
+    .file-ref { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
     .file-ref span { color: var(--blue); }
 
-    .card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .badge { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 3px; white-space: nowrap; font-weight: 500; }
+    .badge-count     { background: var(--border); color: var(--text); }
+    .badge-high      { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-medium    { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
+    .badge-low       { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
+    .badge-new       { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
+    .badge-analyzed  { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-inactive  { background: var(--border);    color: var(--text-dim); }
 
-    .badge {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 3px;
-      white-space: nowrap;
-      font-weight: 500;
+    /* ── Sparkline ── */
+    .sparkline-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; position: relative; }
+    .sparkline-svg { display: block; width: 96px; height: 28px; overflow: visible; }
+    .sparkline-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-align: right; }
+    .trend-rising  { color: var(--red); }
+    .trend-falling { color: var(--green); }
+    .trend-stable  { color: var(--text-dim); }
+    .spark-tooltip {
+      display: none; position: absolute; right: 0; top: 36px;
+      background: #1a2030; border: 1px solid var(--border-hi); border-radius: 4px;
+      padding: 8px 10px; font-family: var(--mono); font-size: 11px; color: var(--text);
+      z-index: 100; width: 180px; max-height: 180px; overflow-y: auto; white-space: nowrap;
     }
-    .badge-count {
-      background: var(--border);
-      color: var(--text);
-    }
-    .badge-high     { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-medium   { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
-    .badge-low      { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
-    .badge-new      { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
-    .badge-analyzed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-inactive { background: var(--border);    color: var(--text-dim); }
+    .sparkline-wrap:hover .spark-tooltip { display: block; }
+    .spark-tooltip-row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+    .spark-tooltip-row.nonzero { color: var(--text-hi); }
 
     /* ── Card body ── */
     .card-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-
-    .message-block {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 14px 16px;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text);
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.7;
-    }
-
-    .meta-row {
-      display: flex;
-      gap: 24px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-    }
+    .message-block { background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 13px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
+    .meta-row { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); flex-wrap: wrap; }
     .meta-row span { color: var(--text); }
 
-    /* ── Analysis section ── */
+    /* ── Analysis ── */
     .analysis { display: flex; flex-direction: column; gap: 14px; }
     .analysis-row { display: flex; flex-direction: column; gap: 6px; }
-    .analysis-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-dim);
-    }
-    .analysis-text {
-      font-size: 14px;
-      color: var(--text-hi);
-      line-height: 1.65;
-    }
-    .analysis-fix {
-      background: var(--bg-code);
-      border-left: 3px solid var(--green);
-      padding: 12px 16px;
-      font-size: 14px;
-      color: var(--text-hi);
-      line-height: 1.65;
-      border-radius: 0 4px 4px 0;
-      white-space: pre-wrap;
-    }
+    .analysis-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+    .analysis-text { font-size: 14px; color: var(--text-hi); line-height: 1.65; }
+    .analysis-fix { background: var(--bg-code); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 14px; color: var(--text-hi); line-height: 1.65; border-radius: 0 4px 4px 0; white-space: pre-wrap; }
+    .no-analysis { font-size: 13px; color: var(--text-dim); font-style: italic; }
 
-    .no-analysis {
-      font-size: 13px;
-      color: var(--text-dim);
-      font-style: italic;
-    }
-
-    /* ── Collapsible traceback ── */
-    .traceback-toggle {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-dim);
-      font-family: var(--mono);
-      font-size: 12px;
-      padding: 6px 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: border-color 0.15s, color 0.15s;
-      align-self: flex-start;
-    }
+    /* ── Traceback ── */
+    .traceback-toggle { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-family: var(--mono); font-size: 12px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color 0.15s, color 0.15s; align-self: flex-start; }
     .traceback-toggle:hover { border-color: var(--border-hi); color: var(--text); }
     .traceback-toggle .arrow { transition: transform 0.2s; display: inline-block; }
     .traceback-toggle.open .arrow { transform: rotate(90deg); }
-
-    .traceback-block {
-      display: none;
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 14px 16px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.7;
-      overflow-x: auto;
-    }
+    .traceback-block { display: none; background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); white-space: pre-wrap; word-break: break-word; line-height: 1.7; overflow-x: auto; }
     .traceback-block.open { display: block; }
-    .traceback-block .tb-file   { color: var(--blue); }
-    .traceback-block .tb-error  { color: var(--red); }
 
-    /* ── Divider inside card ── */
-    .card-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 0 -20px;
-    }
+    .card-divider { height: 1px; background: var(--border); margin: 0 -20px; }
 
-    /* ── Empty state ── */
-    .empty {
-      text-align: center;
-      padding: 60px;
-      color: var(--text-dim);
-      font-family: var(--mono);
-      font-size: 14px;
-    }
+    .empty { text-align: center; padding: 60px; color: var(--text-dim); font-family: var(--mono); font-size: 14px; }
+    .empty-filter { display: none; text-align: center; padding: 40px; color: var(--text-dim); font-family: var(--mono); font-size: 13px; }
+    .empty-filter.visible { display: block; }
 
     /* ── Footer ── */
-    .footer {
-      margin-top: 48px;
-      padding: 20px 40px;
-      border-top: 1px solid var(--border);
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-dim);
-      text-align: center;
-    }
+    .footer { margin-top: 48px; padding: 20px 40px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 12px; color: var(--text-dim); text-align: center; }
     .footer a { color: var(--amber); text-decoration: none; }
   </style>
 </head>
 <body>
 
-<!-- Header -->
 <header class="header">
   <div class="header-left">
     <div class="logo">vigil<span>//</span>digest</div>
@@ -318,7 +231,6 @@
   <div class="generated-at">generated {{ generated_at }}</div>
 </header>
 
-<!-- Summary bar -->
 <div class="summary">
   <div class="stat">
     <div class="stat-value {% if total_unique > 0 %}amber{% endif %}">{{ total_unique }}</div>
@@ -338,82 +250,154 @@
   </div>
 </div>
 
-<!-- Error list -->
-<main class="main">
-  {% if errors %}
-  <div class="section-label">{{ errors|length }} active error{{ 's' if errors|length != 1 }} — sorted by occurrence count</div>
-
-  {% for error in errors %}
-  <div class="error-card">
-
-    <!-- Card header -->
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="logger-name">{{ error.logger_name }}</div>
-        {% if error.file_path %}
-        <div class="file-ref">
-          {{ error.file_path }}<span>:{{ error.line_number }}</span>
-        </div>
-        {% endif %}
-      </div>
-      <div class="card-badges">
-        <span class="badge badge-count">×{{ error.occurrence_count }}</span>
-        {% if error.analysis %}
-          <span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>
-        {% endif %}
-        <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
-      </div>
-    </div>
-
-    <!-- Card body -->
-    <div class="card-body">
-
-      <!-- Message -->
-      <div class="message-block">{{ error.message_template }}</div>
-
-      <!-- Meta -->
-      <div class="meta-row">
-        <div>first seen <span>{{ error.first_seen.strftime('%Y-%m-%d %H:%M') if error.first_seen else '—' }}</span></div>
-        <div>last seen <span>{{ error.last_seen.strftime('%Y-%m-%d %H:%M') if error.last_seen else '—' }}</span></div>
-        <div>fingerprint <span>{{ error.fingerprint }}</span></div>
-      </div>
-
-      {% if error.sample_traceback %}
-      <div class="card-divider"></div>
-
-      <!-- Traceback (collapsible) -->
-      <button class="traceback-toggle" onclick="toggleTraceback(this)">
-        <span class="arrow">▶</span> traceback
-      </button>
-      <div class="traceback-block">{{ error.sample_traceback }}</div>
-      {% endif %}
-
-      {% if error.analysis %}
-      <div class="card-divider"></div>
-
-      <!-- LLM analysis -->
-      <div class="analysis">
-        <div class="analysis-row">
-          <div class="analysis-label">What happened</div>
-          <div class="analysis-text">{{ error.analysis.short_description }}</div>
-        </div>
-        <div class="analysis-row">
-          <div class="analysis-label">Root cause</div>
-          <div class="analysis-text">{{ error.analysis.root_cause }}</div>
-        </div>
-        <div class="analysis-row">
-          <div class="analysis-label">Suggested fix</div>
-          <div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div>
-        </div>
-      </div>
-      {% else %}
-      <div class="card-divider"></div>
-      <div class="no-analysis">No analysis available yet.</div>
-      {% endif %}
-
+{% if errors %}
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label">Status</span>
+    <div class="pill-group" id="filter-status">
+      <button class="pill active" data-value="all">all</button>
+      <button class="pill new"      data-value="new">new</button>
+      <button class="pill analyzed" data-value="analyzed">analyzed</button>
     </div>
   </div>
-  {% endfor %}
+
+  <div class="control-group">
+    <span class="control-label">Confidence</span>
+    <div class="pill-group" id="filter-confidence">
+      <button class="pill active" data-value="all">all</button>
+      <button class="pill high"   data-value="high">high</button>
+      <button class="pill medium" data-value="medium">medium</button>
+      <button class="pill low"    data-value="low">low</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <span class="control-label">Trend</span>
+    <div class="pill-group" id="filter-trend">
+      <button class="pill active"  data-value="all">all</button>
+      <button class="pill rising"  data-value="rising">↑ rising</button>
+      <button class="pill stable"  data-value="stable">→ stable</button>
+      <button class="pill falling" data-value="falling">↓ falling</button>
+    </div>
+  </div>
+
+  <div class="control-group controls-right">
+    <span class="control-label">Sort</span>
+    <select class="sort-select" id="sort-select">
+      <option value="occurrences-desc">occurrences ↓</option>
+      <option value="occurrences-asc">occurrences ↑</option>
+      <option value="last_seen-desc">last seen ↓</option>
+      <option value="last_seen-asc">last seen ↑</option>
+      <option value="first_seen-desc">first seen ↓</option>
+      <option value="first_seen-asc">first seen ↑</option>
+    </select>
+    <span class="results-count" id="results-count"></span>
+  </div>
+</div>
+{% endif %}
+
+<main class="main">
+  {% if errors %}
+
+  <div id="error-list">
+    {% for error in errors %}
+    <div class="error-card"
+      data-status="{{ error.status }}"
+      data-confidence="{{ error.analysis.confidence if error.analysis else 'none' }}"
+      data-trend="{{ error.sparkline.trend }}"
+      data-occurrences="{{ error.occurrence_count }}"
+      data-first-seen="{{ error.first_seen.isoformat() if error.first_seen else '' }}"
+      data-last-seen="{{ error.last_seen.isoformat() if error.last_seen else '' }}"
+    >
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="logger-name">{{ error.logger_name }}</div>
+          {% if error.file_path %}
+          <div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>
+          {% endif %}
+        </div>
+
+        <div class="card-badges">
+          {% set sp = error.sparkline %}
+          {% if sp.has_data %}
+          <div class="sparkline-wrap">
+            <svg class="sparkline-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <line x1="0" y1="100" x2="100" y2="100" stroke="#1e2535" stroke-width="1"/>
+              {% if sp.trend == "rising" %}{% set stroke_color = "#e05252" %}
+              {% elif sp.trend == "falling" %}{% set stroke_color = "#3ecf8e" %}
+              {% else %}{% set stroke_color = "#4d8ef0" %}{% endif %}
+              <polyline
+                points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}{{ sp.points[-1][0] }},100 0,100"
+                fill="{{ stroke_color }}" fill-opacity="0.08" stroke="none"/>
+              <polyline
+                points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}"
+                fill="none" stroke="{{ stroke_color }}" stroke-width="2.5"
+                stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="sparkline-label trend-{{ sp.trend }}">
+              {% if sp.trend == "rising" %}↑ rising{% elif sp.trend == "falling" %}↓ falling{% else %}→ stable{% endif %} · 48h
+            </div>
+            <div class="spark-tooltip">
+              {% for row in sp.hourly | reverse %}{% if loop.index <= 24 %}
+              <div class="spark-tooltip-row {% if row.count > 0 %}nonzero{% endif %}">
+                <span>{{ row.hour }}</span><span>{{ row.count }}</span>
+              </div>
+              {% endif %}{% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <span class="badge badge-count">×{{ error.occurrence_count }}</span>
+          {% if error.analysis %}
+            <span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>
+          {% endif %}
+          <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="message-block">{{ error.message_template }}</div>
+
+        <div class="meta-row">
+          <div>first seen <span>{{ error.first_seen.strftime('%Y-%m-%d %H:%M') if error.first_seen else '—' }}</span></div>
+          <div>last seen <span>{{ error.last_seen.strftime('%Y-%m-%d %H:%M') if error.last_seen else '—' }}</span></div>
+          <div>fingerprint <span>{{ error.fingerprint }}</span></div>
+        </div>
+
+        {% if error.sample_traceback %}
+        <div class="card-divider"></div>
+        <button class="traceback-toggle" onclick="toggleTraceback(this)">
+          <span class="arrow">▶</span> traceback
+        </button>
+        <div class="traceback-block">{{ error.sample_traceback }}</div>
+        {% endif %}
+
+        {% if error.analysis %}
+        <div class="card-divider"></div>
+        <div class="analysis">
+          <div class="analysis-row">
+            <div class="analysis-label">What happened</div>
+            <div class="analysis-text">{{ error.analysis.short_description }}</div>
+          </div>
+          <div class="analysis-row">
+            <div class="analysis-label">Root cause</div>
+            <div class="analysis-text">{{ error.analysis.root_cause }}</div>
+          </div>
+          <div class="analysis-row">
+            <div class="analysis-label">Suggested fix</div>
+            <div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="card-divider"></div>
+        <div class="no-analysis">No analysis available yet.</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="empty-filter" id="empty-filter">// no errors match the current filters</div>
 
   {% else %}
   <div class="empty">// no active errors — all clear</div>
@@ -425,11 +409,97 @@
 </footer>
 
 <script>
-  function toggleTraceback(btn) {
-    btn.classList.toggle('open');
-    const block = btn.nextElementSibling;
-    block.classList.toggle('open');
+  // ── State ──────────────────────────────────────────────────────────────────
+  const state = {
+    status:     'all',
+    confidence: 'all',
+    trend:      'all',
+    sort:       'occurrences-desc',
+  };
+
+  // ── DOM refs ───────────────────────────────────────────────────────────────
+  const list        = document.getElementById('error-list');
+  const emptyFilter = document.getElementById('empty-filter');
+  const countEl     = document.getElementById('results-count');
+
+  // ── Pill groups ────────────────────────────────────────────────────────────
+  function bindPillGroup(groupId, key) {
+    const group = document.getElementById(groupId);
+    if (!group) return;
+    group.addEventListener('click', e => {
+      const pill = e.target.closest('.pill');
+      if (!pill) return;
+      group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      state[key] = pill.dataset.value;
+      apply();
+    });
   }
+  bindPillGroup('filter-status',     'status');
+  bindPillGroup('filter-confidence', 'confidence');
+  bindPillGroup('filter-trend',      'trend');
+
+  // ── Sort select ────────────────────────────────────────────────────────────
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      state.sort = sortSelect.value;
+      apply();
+    });
+  }
+
+  // ── Core logic ─────────────────────────────────────────────────────────────
+  function apply() {
+    const cards = Array.from(list.querySelectorAll('.error-card'));
+
+    // 1. Filter
+    let visible = 0;
+    cards.forEach(card => {
+      const show =
+        (state.status     === 'all' || card.dataset.status     === state.status) &&
+        (state.confidence === 'all' || card.dataset.confidence === state.confidence) &&
+        (state.trend      === 'all' || card.dataset.trend      === state.trend);
+
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+
+    // 2. Sort visible cards
+    const [field, dir] = state.sort.split('-');
+    const visibleCards = cards.filter(c => !c.classList.contains('hidden'));
+
+    visibleCards.sort((a, b) => {
+      let va, vb;
+      if (field === 'occurrences') {
+        va = parseInt(a.dataset.occurrences, 10);
+        vb = parseInt(b.dataset.occurrences, 10);
+      } else if (field === 'first_seen') {
+        va = a.dataset.firstSeen;
+        vb = b.dataset.firstSeen;
+      } else if (field === 'last_seen') {
+        va = a.dataset.lastSeen;
+        vb = b.dataset.lastSeen;
+      }
+      if (va < vb) return dir === 'asc' ? -1 :  1;
+      if (va > vb) return dir === 'asc' ?  1 : -1;
+      return 0;
+    });
+
+    // Re-insert in sorted order (hidden cards go to end)
+    const hidden = cards.filter(c => c.classList.contains('hidden'));
+    [...visibleCards, ...hidden].forEach(c => list.appendChild(c));
+
+    // 3. Update results count + empty state
+    const total = cards.length;
+    countEl.innerHTML = visible === total
+      ? `<span>${total}</span> error${total !== 1 ? 's' : ''}`
+      : `<span>${visible}</span> of ${total}`;
+
+    emptyFilter.classList.toggle('visible', visible === 0);
+  }
+
+  // Initial count render
+  apply();
 </script>
 </body>
 </html>
