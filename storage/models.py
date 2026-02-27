@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
-from sqlmodel import Column, Field, SQLModel
+from sqlmodel import Column, Field, SQLModel, UniqueConstraint
 from sqlalchemy import JSON
 
 
@@ -27,7 +27,6 @@ class LogEvent:
     message: str
     raw_lines: list[str] = field(default_factory=list)
     traceback: Optional[str] = None
-    # Extracted from traceback if present
     file_path: Optional[str] = None
     line_number: Optional[int] = None
 
@@ -53,7 +52,7 @@ class ErrorRecord(SQLModel, table=True):
 
     fingerprint: str = Field(primary_key=True)
     logger_name: str
-    message_template: str      # normalized message, variable parts stripped
+    message_template: str
     sample_traceback: Optional[str] = None
     file_path: Optional[str] = None
     line_number: Optional[int] = None
@@ -62,8 +61,22 @@ class ErrorRecord(SQLModel, table=True):
     last_seen: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: ErrorStatus = Field(default=ErrorStatus.NEW)
 
-    # ErrorAnalysis stored as a JSON blob; use sa_column for SQLAlchemy JSON type
     analysis: Optional[ErrorAnalysis] = Field(
         default=None,
         sa_column=Column(JSON, nullable=True),
     )
+
+
+# ---------------------------------------------------------------------------
+# SQLModel table: per-hour occurrence counts for trend sparklines
+# ---------------------------------------------------------------------------
+
+class ErrorHourlyStat(SQLModel, table=True):
+    __tablename__ = "error_hourly_stats"
+    __table_args__ = (UniqueConstraint("fingerprint", "hour"),)
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    fingerprint: str = Field(index=True)
+    # Truncated to the start of the hour, always UTC
+    hour: datetime
+    count: int = Field(default=0)

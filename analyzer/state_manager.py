@@ -9,9 +9,13 @@ logger = logging.getLogger(__name__)
 
 
 def persist_errors(db: Database, records: list[ErrorRecord]) -> None:
-    """Upsert all deduplicated error records into the database."""
+    """
+    Upsert all deduplicated error records and write one hourly stat row
+    per error for the current hour.
+    """
     for record in records:
         db.upsert_error(record)
+        db.upsert_hourly_stat(record.fingerprint, record.occurrence_count)
     logger.info("Persisted %d error records", len(records))
 
 

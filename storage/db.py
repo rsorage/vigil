@@ -1,18 +1,21 @@
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Generator, Optional
 
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from storage.models import ErrorAnalysis, ErrorRecord, ErrorStatus
+from storage.models import ErrorAnalysis, ErrorHourlyStat, ErrorRecord, ErrorStatus
+
+
+def _truncate_to_hour(dt: datetime) -> datetime:
+    """Return dt with minutes/seconds/microseconds zeroed, UTC."""
+    return dt.replace(minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
 
 class Database:
     def __init__(self, db_path: str | Path = "errors.db"):
         db_url = f"sqlite:///{db_path}"
-        # expire_on_commit=False: objects remain usable after their session closes,
-        # which matters when callers hold references across multiple operations.
         self.engine = create_engine(
             db_url,
             echo=False,
@@ -32,20 +35,14 @@ class Database:
         SQLModel.metadata.create_all(self.engine)
 
     # -------------------------------------------------------------------------
-    # Writes
+    # Writes — errors
     # -------------------------------------------------------------------------
 
     def upsert_error(self, record: ErrorRecord) -> None:
         """
         Insert a new error or increment occurrence_count + update last_seen.
         If an inactive error reappears it resets to NEW so it gets re-analyzed.
-
-        Note: always pass a freshly constructed ErrorRecord; do not reuse an
-        instance that was previously handed to this method, as SQLAlchemy will
-        have attached it to a closed session.
         """
-        # Extract scalar values before opening the session to avoid any
-        # detached-instance issues if the caller inadvertently reuses objects.
         fingerprint = str(record.fingerprint)
         with self._session() as session:
             existing = session.get(ErrorRecord, fingerprint)
@@ -84,7 +81,36 @@ class Database:
             return len(records)
 
     # -------------------------------------------------------------------------
-    # Reads
+    # Writes — hourly stats
+    # -------------------------------------------------------------------------
+
+    def upsert_hourly_stat(self, fingerprint: str, count: int, hour: datetime | None = None) -> None:
+        """
+        Record occurrence count for a given error in the current hour.
+        If called multiple times in the same hour (e.g. during testing),
+        the count is accumulated.
+        """
+        bucket = _truncate_to_hour(hour or datetime.now(timezone.utc))
+        with self._session() as session:
+            existing = session.exec(
+                select(ErrorHourlyStat)
+                .where(ErrorHourlyStat.fingerprint == fingerprint)
+                .where(ErrorHourlyStat.hour == bucket)
+            ).first()
+
+            if existing is None:
+                session.add(ErrorHourlyStat(
+                    fingerprint=fingerprint,
+                    hour=bucket,
+                    count=count,
+                ))
+            else:
+                existing.count += count
+
+            session.commit()
+
+    # -------------------------------------------------------------------------
+    # Reads — errors
     # -------------------------------------------------------------------------
 
     def get_by_fingerprint(self, fingerprint: str) -> Optional[ErrorRecord]:
@@ -117,3 +143,47 @@ class Database:
                 .where(ErrorRecord.status != ErrorStatus.INACTIVE)
                 .order_by(ErrorRecord.occurrence_count.desc())
             ).all()
+
+    # -------------------------------------------------------------------------
+    # Reads — hourly stats
+    # -------------------------------------------------------------------------
+
+    def get_hourly_stats(
+        self,
+        fingerprint: str,
+        hours: int = 48,
+    ) -> list[ErrorHourlyStat]:
+        """Return up to `hours` most recent hourly stat rows for an error."""
+        since = _truncate_to_hour(datetime.now(timezone.utc)) - timedelta(hours=hours - 1)
+        with self._session() as session:
+            return session.exec(
+                select(ErrorHourlyStat)
+                .where(ErrorHourlyStat.fingerprint == fingerprint)
+                .where(ErrorHourlyStat.hour >= since)
+                .order_by(ErrorHourlyStat.hour.asc())
+            ).all()
+
+    def get_hourly_stats_bulk(
+        self,
+        fingerprints: list[str],
+        hours: int = 48,
+    ) -> dict[str, list[ErrorHourlyStat]]:
+        """
+        Fetch hourly stats for multiple errors in a single query.
+        Returns a dict keyed by fingerprint.
+        """
+        if not fingerprints:
+            return {}
+        since = _truncate_to_hour(datetime.now(timezone.utc)) - timedelta(hours=hours - 1)
+        with self._session() as session:
+            rows = session.exec(
+                select(ErrorHourlyStat)
+                .where(ErrorHourlyStat.fingerprint.in_(fingerprints))
+                .where(ErrorHourlyStat.hour >= since)
+                .order_by(ErrorHourlyStat.hour.asc())
+            ).all()
+
+        result: dict[str, list[ErrorHourlyStat]] = {fp: [] for fp in fingerprints}
+        for row in rows:
+            result[row.fingerprint].append(row)
+        return result
