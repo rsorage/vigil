@@ -12,7 +12,7 @@ lint: ## Check code style (ruff)
 	uv run ruff check .
 
 inspect: ## Print all active error records to console
-	uv run python inspect.py
+	uv run python show_errors.py
 
 run-hourly: ## Collect logs and persist errors (ad-hoc)
 	uv run python hourly.py
