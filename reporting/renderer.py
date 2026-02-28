@@ -1,4 +1,5 @@
 import logging
+import markdown as md_lib
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -12,6 +13,17 @@ logger = logging.getLogger(__name__)
 
 SPARKLINE_HOURS = 48
 
+_MD = md_lib.Markdown(extensions=["fenced_code", "nl2br"])
+
+
+def _render_md(text: str | None) -> str:
+    """Convert markdown to safe HTML. Returns empty string for None."""
+    if not text:
+        return ""
+    _MD.reset()
+    return _MD.convert(text)
+
+
 
 def _get_env() -> Environment:
     templates_dir = Path(__file__).parent / "templates"
@@ -24,9 +36,14 @@ def _get_env() -> Environment:
 def _analysis_dict(record: ErrorRecord) -> dict | None:
     if not record.analysis:
         return None
-    if isinstance(record.analysis, dict):
-        return record.analysis
-    return record.analysis.model_dump()
+    raw = record.analysis if isinstance(record.analysis, dict) else record.analysis.model_dump()
+    # Pre-render markdown fields so the template can use them as safe HTML
+    return {
+        **raw,
+        "short_description": _render_md(raw.get("short_description")),
+        "root_cause":        _render_md(raw.get("root_cause")),
+        "suggested_fix":     _render_md(raw.get("suggested_fix")),
+    }
 
 
 def _build_sparkline_data(stats: list[ErrorHourlyStat], hours: int = SPARKLINE_HOURS) -> dict:

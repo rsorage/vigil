@@ -147,7 +147,15 @@
     .analysis-row { display: flex; flex-direction: column; gap: 6px; }
     .analysis-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
     .analysis-text { font-size: 14px; color: var(--text-hi); line-height: 1.65; }
-    .analysis-fix { background: var(--bg-code); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 14px; color: var(--text-hi); line-height: 1.65; border-radius: 0 4px 4px 0; white-space: pre-wrap; }
+    .analysis-text p, .analysis-fix p { margin-bottom: 8px; }
+    .analysis-text p:last-child, .analysis-fix p:last-child { margin-bottom: 0; }
+    .analysis-text strong, .analysis-fix strong { color: var(--text-hi); font-weight: 600; }
+    .analysis-text code, .analysis-fix code { font-family: var(--mono); font-size: 12px; background: var(--bg); padding: 1px 5px; border-radius: 3px; color: var(--amber); }
+    .analysis-text ul, .analysis-fix ul, .analysis-text ol, .analysis-fix ol { padding-left: 20px; margin-bottom: 8px; }
+    .analysis-text li, .analysis-fix li { margin-bottom: 4px; }
+    .analysis-fix { background: var(--bg-code); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 14px; color: var(--text-hi); line-height: 1.65; border-radius: 0 4px 4px 0; }
+    .analysis-fix pre { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 12px; overflow-x: auto; margin: 8px 0; }
+    .analysis-fix pre code { background: none; padding: 0; color: var(--text); font-size: 12px; }
     .no-analysis { font-size: 13px; color: var(--text-dim); font-style: italic; }
     .traceback-toggle { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-family: var(--mono); font-size: 12px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color 0.15s, color 0.15s; align-self: flex-start; }
     .traceback-toggle:hover { border-color: var(--border-hi); color: var(--text); }
@@ -346,9 +354,9 @@
         {% if error.analysis %}
         <div class="card-divider"></div>
         <div class="analysis">
-          <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description }}</div></div>
-          <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause }}</div></div>
-          <div class="analysis-row"><div class="analysis-label">Suggested fix</div><div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div></div>
+          <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description | safe }}</div></div>
+          <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause | safe }}</div></div>
+          <div class="analysis-row"><div class="analysis-label">Suggested fix</div><div class="analysis-fix">{{ error.analysis.suggested_fix | safe if error.analysis.suggested_fix else '—' }}</div></div>
         </div>
         {% else %}
         <div class="card-divider"></div>
@@ -400,8 +408,8 @@
           {% if error.analysis %}
           <div class="card-divider"></div>
           <div class="analysis">
-            <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description }}</div></div>
-            <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause }}</div></div>
+            <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description | safe }}</div></div>
+            <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause | safe }}</div></div>
           </div>
           {% endif %}
         </div>
