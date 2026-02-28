@@ -8,7 +8,7 @@ Vigil runs alongside your production Docker stack. Every hour it collects your c
 
 I put this together in ~4 hours with Claude Sonnet. It's running in my own production environment. It's not battle-tested at scale, but it works, and I'm actively improving it.
 
-<!-- Add a screenshot here before publishing -->
+![Vigil digest report](docs/screenshot.png)
 
 ## How it works
 
