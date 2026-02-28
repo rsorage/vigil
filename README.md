@@ -68,7 +68,7 @@ vigil/
 **Requirements**: Python 3.11+, [uv](https://github.com/astral-sh/uv), Docker Compose v2, access to the target service's compose file and source code on the same host.
 
 ```bash
-git clone https://github.com/your-username/vigil.git
+git clone https://github.com/rsorage/vigil
 cd vigil
 cp .env.example .env
 # Edit .env — at minimum set ANTHROPIC_API_KEY, DOCKER_COMPOSE_FILE,
