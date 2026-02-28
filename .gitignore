@@ -1,7 +1,35 @@
-.venv/
-.pytest_cache/
+# Environment
+.env
+.env.*
+!.env.example
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Generated reports and logs
+reports/
+logs/
+
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
 
-*.pyc
+# uv / virtualenv
+.venv/
+venv/
+.python-version
 
-reports/*
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
