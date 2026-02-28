@@ -29,28 +29,10 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 15px;
-      line-height: 1.6;
-      min-height: 100vh;
-    }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; min-height: 100vh; }
 
     /* ── Header ── */
-    .header {
-      border-bottom: 1px solid var(--border);
-      padding: 28px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 10;
-    }
+    .header { border-bottom: 1px solid var(--border); padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
     .header-left { display: flex; align-items: center; gap: 16px; }
     .logo { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--amber); letter-spacing: -0.02em; }
     .logo span { color: var(--text-dim); }
@@ -59,117 +41,90 @@
 
     /* ── Summary bar ── */
     .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
-    .stat { background: var(--bg); padding: 20px 32px; display: flex; flex-direction: column; gap: 4px; cursor: default; }
+    .stat { background: var(--bg); padding: 20px 32px; display: flex; flex-direction: column; gap: 4px; }
     .stat-value { font-family: var(--mono); font-size: 32px; font-weight: 500; color: var(--text-hi); line-height: 1; }
     .stat-value.amber { color: var(--amber); }
     .stat-value.red   { color: var(--red); }
     .stat-value.green { color: var(--green); }
     .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; }
 
-    /* ── Controls bar ── */
-    .controls {
+    /* ── Diff banner ── */
+    .diff-banner {
       border-bottom: 1px solid var(--border);
-      padding: 12px 40px;
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      flex-wrap: wrap;
-      background: var(--bg);
-    }
-    .control-group {
+      padding: 10px 40px;
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-    .control-label {
       font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      white-space: nowrap;
+      font-size: 12px;
+      background: var(--bg);
     }
+    .diff-label { color: var(--text-dim); margin-right: 4px; }
+    .diff-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: opacity 0.12s;
+      font-size: 12px;
+    }
+    .diff-chip:hover { opacity: 0.8; }
+    .diff-chip.new      { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
+    .diff-chip.ongoing  { background: var(--border);    border-color: var(--border-hi); color: var(--text); }
+    .diff-chip.resolved { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .diff-sep { color: var(--border-hi); padding: 0 2px; }
+
+    /* ── Controls bar ── */
+    .controls { border-bottom: 1px solid var(--border); padding: 12px 40px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; background: var(--bg); }
+    .control-group { display: flex; align-items: center; gap: 6px; }
+    .control-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
     .pill-group { display: flex; gap: 2px; }
-    .pill {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 3px;
-      border: 1px solid var(--border);
-      background: none;
-      color: var(--text-dim);
-      cursor: pointer;
-      transition: all 0.12s;
-      white-space: nowrap;
-    }
+    .pill { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border); background: none; color: var(--text-dim); cursor: pointer; transition: all 0.12s; white-space: nowrap; }
     .pill:hover { border-color: var(--border-hi); color: var(--text); }
-    .pill.active {
-      background: var(--border-hi);
-      border-color: var(--border-hi);
-      color: var(--text-hi);
-    }
-    .pill.active.rising  { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
-    .pill.active.falling { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-    .pill.active.stable  { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
-    .pill.active.new     { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
-    .pill.active.analyzed{ background: var(--green-dim); border-color: var(--green); color: var(--green); }
-    .pill.active.high    { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-    .pill.active.medium  { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
-    .pill.active.low     { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
-
-    .controls-right { margin-left: auto; }
-    .sort-select {
-      font-family: var(--mono);
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 3px;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
-    }
+    .pill.active { background: var(--border-hi); border-color: var(--border-hi); color: var(--text-hi); }
+    .pill.active.rising   { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
+    .pill.active.falling  { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.stable   { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
+    .pill.active.new      { background: var(--blue-dim);  border-color: var(--blue);  color: var(--blue); }
+    .pill.active.analyzed { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.high     { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+    .pill.active.medium   { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+    .pill.active.low      { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
+    .controls-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .sort-select { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); cursor: pointer; outline: none; }
     .sort-select:focus { border-color: var(--border-hi); }
-
-    .results-count {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-dim);
-      white-space: nowrap;
-    }
+    .results-count { font-family: var(--mono); font-size: 11px; color: var(--text-dim); white-space: nowrap; }
     .results-count span { color: var(--text); }
 
-    /* ── Main layout ── */
+    /* ── Main ── */
     .main { padding: 32px 40px; max-width: 1100px; margin: 0 auto; }
 
     /* ── Error cards ── */
-    .error-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      margin-bottom: 16px;
-      overflow: hidden;
-      animation: fadeUp 0.3s ease both;
-      transition: opacity 0.15s, transform 0.15s;
-    }
+    .error-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; animation: fadeUp 0.3s ease both; }
     .error-card.hidden { display: none; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* New-today highlight — subtle left accent */
+    .error-card.is-new { border-left: 3px solid var(--blue); }
 
     .card-header { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); }
     .card-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .logger-name { font-family: var(--mono); font-size: 13px; color: var(--amber); word-break: break-all; }
     .file-ref { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
     .file-ref span { color: var(--blue); }
-
     .card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
     .badge { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 3px; white-space: nowrap; font-weight: 500; }
-    .badge-count     { background: var(--border); color: var(--text); }
-    .badge-high      { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-medium    { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
-    .badge-low       { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
-    .badge-new       { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
-    .badge-analyzed  { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-inactive  { background: var(--border);    color: var(--text-dim); }
+    .badge-count    { background: var(--border); color: var(--text); }
+    .badge-high     { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-medium   { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
+    .badge-low      { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
+    .badge-new      { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
+    .badge-analyzed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    .badge-inactive { background: var(--border);    color: var(--text-dim); }
+    .badge-resolved { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
 
     /* ── Sparkline ── */
     .sparkline-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; position: relative; }
@@ -178,12 +133,7 @@
     .trend-rising  { color: var(--red); }
     .trend-falling { color: var(--green); }
     .trend-stable  { color: var(--text-dim); }
-    .spark-tooltip {
-      display: none; position: absolute; right: 0; top: 36px;
-      background: #1a2030; border: 1px solid var(--border-hi); border-radius: 4px;
-      padding: 8px 10px; font-family: var(--mono); font-size: 11px; color: var(--text);
-      z-index: 100; width: 180px; max-height: 180px; overflow-y: auto; white-space: nowrap;
-    }
+    .spark-tooltip { display: none; position: absolute; right: 0; top: 36px; background: #1a2030; border: 1px solid var(--border-hi); border-radius: 4px; padding: 8px 10px; font-family: var(--mono); font-size: 11px; color: var(--text); z-index: 100; width: 180px; max-height: 180px; overflow-y: auto; white-space: nowrap; }
     .sparkline-wrap:hover .spark-tooltip { display: block; }
     .spark-tooltip-row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
     .spark-tooltip-row.nonzero { color: var(--text-hi); }
@@ -193,24 +143,46 @@
     .message-block { background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 13px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .meta-row { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); flex-wrap: wrap; }
     .meta-row span { color: var(--text); }
-
-    /* ── Analysis ── */
     .analysis { display: flex; flex-direction: column; gap: 14px; }
     .analysis-row { display: flex; flex-direction: column; gap: 6px; }
     .analysis-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
     .analysis-text { font-size: 14px; color: var(--text-hi); line-height: 1.65; }
     .analysis-fix { background: var(--bg-code); border-left: 3px solid var(--green); padding: 12px 16px; font-size: 14px; color: var(--text-hi); line-height: 1.65; border-radius: 0 4px 4px 0; white-space: pre-wrap; }
     .no-analysis { font-size: 13px; color: var(--text-dim); font-style: italic; }
-
-    /* ── Traceback ── */
     .traceback-toggle { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-family: var(--mono); font-size: 12px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color 0.15s, color 0.15s; align-self: flex-start; }
     .traceback-toggle:hover { border-color: var(--border-hi); color: var(--text); }
     .traceback-toggle .arrow { transition: transform 0.2s; display: inline-block; }
     .traceback-toggle.open .arrow { transform: rotate(90deg); }
     .traceback-block { display: none; background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); white-space: pre-wrap; word-break: break-word; line-height: 1.7; overflow-x: auto; }
     .traceback-block.open { display: block; }
-
     .card-divider { height: 1px; background: var(--border); margin: 0 -20px; }
+
+    /* ── Resolved section ── */
+    .resolved-section { margin-top: 32px; }
+    .resolved-toggle {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .resolved-toggle:hover { border-color: var(--border-hi); color: var(--text); }
+    .resolved-toggle-left { display: flex; align-items: center; gap: 10px; }
+    .resolved-toggle .arrow { transition: transform 0.2s; display: inline-block; }
+    .resolved-toggle.open .arrow { transform: rotate(90deg); }
+    .resolved-list { display: none; margin-top: 8px; }
+    .resolved-list.open { display: block; }
+    /* Resolved cards are visually muted */
+    .resolved-list .error-card { opacity: 0.65; border-left: 3px solid var(--green); animation: none; }
+    .resolved-list .error-card:hover { opacity: 0.9; }
 
     .empty { text-align: center; padding: 60px; color: var(--text-dim); font-family: var(--mono); font-size: 14px; }
     .empty-filter { display: none; text-align: center; padding: 40px; color: var(--text-dim); font-family: var(--mono); font-size: 13px; }
@@ -250,6 +222,24 @@
   </div>
 </div>
 
+<!-- Diff banner -->
+<div class="diff-banner">
+  <span class="diff-label">today</span>
+  <span class="diff-chip new" onclick="filterTo('new')" title="Filter to new errors">
+    ↑ {{ diff.new_count }} new
+  </span>
+  <span class="diff-sep">·</span>
+  <span class="diff-chip ongoing" onclick="filterTo('ongoing')" title="Filter to ongoing errors">
+    → {{ diff.ongoing_count }} ongoing
+  </span>
+  {% if diff.resolved_count > 0 %}
+  <span class="diff-sep">·</span>
+  <span class="diff-chip resolved" onclick="scrollToResolved()" title="Scroll to resolved errors">
+    ✓ {{ diff.resolved_count }} resolved
+  </span>
+  {% endif %}
+</div>
+
 {% if errors %}
 <div class="controls">
   <div class="control-group">
@@ -260,7 +250,6 @@
       <button class="pill analyzed" data-value="analyzed">analyzed</button>
     </div>
   </div>
-
   <div class="control-group">
     <span class="control-label">Confidence</span>
     <div class="pill-group" id="filter-confidence">
@@ -270,7 +259,6 @@
       <button class="pill low"    data-value="low">low</button>
     </div>
   </div>
-
   <div class="control-group">
     <span class="control-label">Trend</span>
     <div class="pill-group" id="filter-trend">
@@ -280,7 +268,6 @@
       <button class="pill falling" data-value="falling">↓ falling</button>
     </div>
   </div>
-
   <div class="control-group controls-right">
     <span class="control-label">Sort</span>
     <select class="sort-select" id="sort-select">
@@ -298,16 +285,17 @@
 
 <main class="main">
   {% if errors %}
-
   <div id="error-list">
     {% for error in errors %}
-    <div class="error-card"
+    {% set is_new = error.first_seen and error.first_seen.strftime('%Y-%m-%d') == report_date %}
+    <div class="error-card {% if is_new %}is-new{% endif %}"
       data-status="{{ error.status }}"
       data-confidence="{{ error.analysis.confidence if error.analysis else 'none' }}"
       data-trend="{{ error.sparkline.trend }}"
       data-occurrences="{{ error.occurrence_count }}"
       data-first-seen="{{ error.first_seen.isoformat() if error.first_seen else '' }}"
       data-last-seen="{{ error.last_seen.isoformat() if error.last_seen else '' }}"
+      data-is-new="{{ 'true' if is_new else 'false' }}"
     >
       <div class="card-header">
         <div class="card-header-left">
@@ -316,77 +304,51 @@
           <div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>
           {% endif %}
         </div>
-
         <div class="card-badges">
           {% set sp = error.sparkline %}
           {% if sp.has_data %}
           <div class="sparkline-wrap">
             <svg class="sparkline-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
               <line x1="0" y1="100" x2="100" y2="100" stroke="#1e2535" stroke-width="1"/>
-              {% if sp.trend == "rising" %}{% set stroke_color = "#e05252" %}
-              {% elif sp.trend == "falling" %}{% set stroke_color = "#3ecf8e" %}
-              {% else %}{% set stroke_color = "#4d8ef0" %}{% endif %}
-              <polyline
-                points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}{{ sp.points[-1][0] }},100 0,100"
-                fill="{{ stroke_color }}" fill-opacity="0.08" stroke="none"/>
-              <polyline
-                points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}"
-                fill="none" stroke="{{ stroke_color }}" stroke-width="2.5"
-                stroke-linejoin="round" stroke-linecap="round"/>
+              {% if sp.trend == "rising" %}{% set sc = "#e05252" %}{% elif sp.trend == "falling" %}{% set sc = "#3ecf8e" %}{% else %}{% set sc = "#4d8ef0" %}{% endif %}
+              <polyline points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}{{ sp.points[-1][0] }},100 0,100" fill="{{ sc }}" fill-opacity="0.08" stroke="none"/>
+              <polyline points="{% for x, y in sp.points %}{{ x }},{{ y }} {% endfor %}" fill="none" stroke="{{ sc }}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
             </svg>
             <div class="sparkline-label trend-{{ sp.trend }}">
               {% if sp.trend == "rising" %}↑ rising{% elif sp.trend == "falling" %}↓ falling{% else %}→ stable{% endif %} · 48h
             </div>
             <div class="spark-tooltip">
               {% for row in sp.hourly | reverse %}{% if loop.index <= 24 %}
-              <div class="spark-tooltip-row {% if row.count > 0 %}nonzero{% endif %}">
-                <span>{{ row.hour }}</span><span>{{ row.count }}</span>
-              </div>
+              <div class="spark-tooltip-row {% if row.count > 0 %}nonzero{% endif %}"><span>{{ row.hour }}</span><span>{{ row.count }}</span></div>
               {% endif %}{% endfor %}
             </div>
           </div>
           {% endif %}
-
+          {% if is_new %}<span class="badge badge-new">new today</span>{% endif %}
           <span class="badge badge-count">×{{ error.occurrence_count }}</span>
-          {% if error.analysis %}
-            <span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>
-          {% endif %}
+          {% if error.analysis %}<span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>{% endif %}
           <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
         </div>
       </div>
 
       <div class="card-body">
         <div class="message-block">{{ error.message_template }}</div>
-
         <div class="meta-row">
           <div>first seen <span>{{ error.first_seen.strftime('%Y-%m-%d %H:%M') if error.first_seen else '—' }}</span></div>
           <div>last seen <span>{{ error.last_seen.strftime('%Y-%m-%d %H:%M') if error.last_seen else '—' }}</span></div>
           <div>fingerprint <span>{{ error.fingerprint }}</span></div>
         </div>
-
         {% if error.sample_traceback %}
         <div class="card-divider"></div>
-        <button class="traceback-toggle" onclick="toggleTraceback(this)">
-          <span class="arrow">▶</span> traceback
-        </button>
+        <button class="traceback-toggle" onclick="toggleTraceback(this)"><span class="arrow">▶</span> traceback</button>
         <div class="traceback-block">{{ error.sample_traceback }}</div>
         {% endif %}
-
         {% if error.analysis %}
         <div class="card-divider"></div>
         <div class="analysis">
-          <div class="analysis-row">
-            <div class="analysis-label">What happened</div>
-            <div class="analysis-text">{{ error.analysis.short_description }}</div>
-          </div>
-          <div class="analysis-row">
-            <div class="analysis-label">Root cause</div>
-            <div class="analysis-text">{{ error.analysis.root_cause }}</div>
-          </div>
-          <div class="analysis-row">
-            <div class="analysis-label">Suggested fix</div>
-            <div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div>
-          </div>
+          <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description }}</div></div>
+          <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause }}</div></div>
+          <div class="analysis-row"><div class="analysis-label">Suggested fix</div><div class="analysis-fix">{{ error.analysis.suggested_fix if error.analysis.suggested_fix else '—' }}</div></div>
         </div>
         {% else %}
         <div class="card-divider"></div>
@@ -396,11 +358,57 @@
     </div>
     {% endfor %}
   </div>
-
   <div class="empty-filter" id="empty-filter">// no errors match the current filters</div>
 
   {% else %}
   <div class="empty">// no active errors — all clear</div>
+  {% endif %}
+
+  <!-- Resolved today section -->
+  {% if resolved_today %}
+  <div class="resolved-section" id="resolved-section">
+    <button class="resolved-toggle" onclick="toggleResolved(this)">
+      <div class="resolved-toggle-left">
+        <span class="arrow">▶</span>
+        <span>resolved today</span>
+      </div>
+      <span style="font-size:11px; color: var(--green)">✓ {{ resolved_today|length }} error{{ 's' if resolved_today|length != 1 }}</span>
+    </button>
+    <div class="resolved-list">
+      {% for error in resolved_today %}
+      <div class="error-card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <div class="logger-name">{{ error.logger_name }}</div>
+            {% if error.file_path %}<div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>{% endif %}
+          </div>
+          <div class="card-badges">
+            <span class="badge badge-count">×{{ error.occurrence_count }}</span>
+            <span class="badge badge-resolved">✓ resolved</span>
+            {% if error.resolved_at %}
+            <span class="badge" style="background:var(--border);color:var(--text-dim)">{{ error.resolved_at.strftime('%H:%M') }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="message-block">{{ error.message_template }}</div>
+          <div class="meta-row">
+            <div>first seen <span>{{ error.first_seen.strftime('%Y-%m-%d %H:%M') if error.first_seen else '—' }}</span></div>
+            <div>last seen <span>{{ error.last_seen.strftime('%Y-%m-%d %H:%M') if error.last_seen else '—' }}</span></div>
+            <div>resolved <span>{{ error.resolved_at.strftime('%Y-%m-%d %H:%M') if error.resolved_at else '—' }}</span></div>
+          </div>
+          {% if error.analysis %}
+          <div class="card-divider"></div>
+          <div class="analysis">
+            <div class="analysis-row"><div class="analysis-label">What happened</div><div class="analysis-text">{{ error.analysis.short_description }}</div></div>
+            <div class="analysis-row"><div class="analysis-label">Root cause</div><div class="analysis-text">{{ error.analysis.root_cause }}</div></div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
   {% endif %}
 </main>
 
@@ -410,19 +418,12 @@
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
-  const state = {
-    status:     'all',
-    confidence: 'all',
-    trend:      'all',
-    sort:       'occurrences-desc',
-  };
+  const state = { status: 'all', confidence: 'all', trend: 'all', sort: 'occurrences-desc' };
 
-  // ── DOM refs ───────────────────────────────────────────────────────────────
   const list        = document.getElementById('error-list');
   const emptyFilter = document.getElementById('empty-filter');
   const countEl     = document.getElementById('results-count');
 
-  // ── Pill groups ────────────────────────────────────────────────────────────
   function bindPillGroup(groupId, key) {
     const group = document.getElementById(groupId);
     if (!group) return;
@@ -439,66 +440,113 @@
   bindPillGroup('filter-confidence', 'confidence');
   bindPillGroup('filter-trend',      'trend');
 
-  // ── Sort select ────────────────────────────────────────────────────────────
   const sortSelect = document.getElementById('sort-select');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', () => {
-      state.sort = sortSelect.value;
-      apply();
-    });
-  }
+  if (sortSelect) sortSelect.addEventListener('change', () => { state.sort = sortSelect.value; apply(); });
 
-  // ── Core logic ─────────────────────────────────────────────────────────────
   function apply() {
+    if (!list) return;
     const cards = Array.from(list.querySelectorAll('.error-card'));
-
-    // 1. Filter
     let visible = 0;
     cards.forEach(card => {
       const show =
         (state.status     === 'all' || card.dataset.status     === state.status) &&
         (state.confidence === 'all' || card.dataset.confidence === state.confidence) &&
         (state.trend      === 'all' || card.dataset.trend      === state.trend);
-
       card.classList.toggle('hidden', !show);
       if (show) visible++;
     });
 
-    // 2. Sort visible cards
     const [field, dir] = state.sort.split('-');
     const visibleCards = cards.filter(c => !c.classList.contains('hidden'));
-
     visibleCards.sort((a, b) => {
       let va, vb;
-      if (field === 'occurrences') {
-        va = parseInt(a.dataset.occurrences, 10);
-        vb = parseInt(b.dataset.occurrences, 10);
-      } else if (field === 'first_seen') {
-        va = a.dataset.firstSeen;
-        vb = b.dataset.firstSeen;
-      } else if (field === 'last_seen') {
-        va = a.dataset.lastSeen;
-        vb = b.dataset.lastSeen;
-      }
-      if (va < vb) return dir === 'asc' ? -1 :  1;
+      if (field === 'occurrences') { va = parseInt(a.dataset.occurrences, 10); vb = parseInt(b.dataset.occurrences, 10); }
+      else if (field === 'first_seen') { va = a.dataset.firstSeen; vb = b.dataset.firstSeen; }
+      else if (field === 'last_seen')  { va = a.dataset.lastSeen;  vb = b.dataset.lastSeen; }
+      if (va < vb) return dir === 'asc' ? -1 : 1;
       if (va > vb) return dir === 'asc' ?  1 : -1;
       return 0;
     });
-
-    // Re-insert in sorted order (hidden cards go to end)
     const hidden = cards.filter(c => c.classList.contains('hidden'));
     [...visibleCards, ...hidden].forEach(c => list.appendChild(c));
 
-    // 3. Update results count + empty state
     const total = cards.length;
-    countEl.innerHTML = visible === total
+    if (countEl) countEl.innerHTML = visible === total
       ? `<span>${total}</span> error${total !== 1 ? 's' : ''}`
       : `<span>${visible}</span> of ${total}`;
-
-    emptyFilter.classList.toggle('visible', visible === 0);
+    if (emptyFilter) emptyFilter.classList.toggle('visible', visible === 0);
   }
 
-  // Initial count render
+  // ── Diff banner click-to-filter ────────────────────────────────────────────
+  function filterTo(kind) {
+    if (!list) return;
+    // Reset all filters first
+    ['filter-status','filter-confidence','filter-trend'].forEach(id => {
+      const g = document.getElementById(id);
+      if (g) g.querySelectorAll('.pill').forEach((p, i) => p.classList.toggle('active', i === 0));
+    });
+    state.confidence = 'all';
+    state.trend      = 'all';
+
+    if (kind === 'new') {
+      // Show only cards marked as new today
+      state.status = 'all';
+      if (!list) return;
+      const cards = Array.from(list.querySelectorAll('.error-card'));
+      let visible = 0;
+      cards.forEach(card => {
+        const show = card.dataset.isNew === 'true';
+        card.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      const total = cards.length;
+      if (countEl) countEl.innerHTML = `<span>${visible}</span> of ${total}`;
+      if (emptyFilter) emptyFilter.classList.toggle('visible', visible === 0);
+      return;
+    }
+
+    if (kind === 'ongoing') {
+      state.status = 'all';
+      if (!list) return;
+      const cards = Array.from(list.querySelectorAll('.error-card'));
+      let visible = 0;
+      cards.forEach(card => {
+        const show = card.dataset.isNew !== 'true';
+        card.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      const total = cards.length;
+      if (countEl) countEl.innerHTML = `<span>${visible}</span> of ${total}`;
+      if (emptyFilter) emptyFilter.classList.toggle('visible', visible === 0);
+      return;
+    }
+
+    apply();
+  }
+
+  function scrollToResolved() {
+    const el = document.getElementById('resolved-section');
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Auto-open the resolved section
+    const toggle = el.querySelector('.resolved-toggle');
+    const rlist  = el.querySelector('.resolved-list');
+    if (toggle && rlist && !rlist.classList.contains('open')) {
+      toggle.classList.add('open');
+      rlist.classList.add('open');
+    }
+  }
+
+  function toggleTraceback(btn) {
+    btn.classList.toggle('open');
+    btn.nextElementSibling.classList.toggle('open');
+  }
+
+  function toggleResolved(btn) {
+    btn.classList.toggle('open');
+    btn.nextElementSibling.classList.toggle('open');
+  }
+
   apply();
 </script>
 </body>
