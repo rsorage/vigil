@@ -9,8 +9,11 @@ from storage.models import ErrorAnalysis, ErrorHourlyStat, ErrorRecord, ErrorSta
 
 
 def _truncate_to_hour(dt: datetime) -> datetime:
-    """Return dt with minutes/seconds/microseconds zeroed, UTC."""
     return dt.replace(minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+
+
+def _start_of_day(dt: datetime) -> datetime:
+    return dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
 
 class Database:
@@ -31,7 +34,6 @@ class Database:
             yield session
 
     def initialize(self) -> None:
-        """Create all tables if they don't exist."""
         SQLModel.metadata.create_all(self.engine)
 
     # -------------------------------------------------------------------------
@@ -39,14 +41,9 @@ class Database:
     # -------------------------------------------------------------------------
 
     def upsert_error(self, record: ErrorRecord) -> None:
-        """
-        Insert a new error or increment occurrence_count + update last_seen.
-        If an inactive error reappears it resets to NEW so it gets re-analyzed.
-        """
         fingerprint = str(record.fingerprint)
         with self._session() as session:
             existing = session.get(ErrorRecord, fingerprint)
-
             if existing is None:
                 session.add(record)
             else:
@@ -54,11 +51,10 @@ class Database:
                 existing.last_seen = record.last_seen
                 if existing.status == ErrorStatus.INACTIVE:
                     existing.status = ErrorStatus.NEW
-
+                    existing.resolved_at = None  # reactivated — clear resolved_at
             session.commit()
 
     def save_analysis(self, fingerprint: str, analysis: ErrorAnalysis) -> None:
-        """Persist LLM analysis and transition status to ANALYZED."""
         with self._session() as session:
             record = session.get(ErrorRecord, fingerprint)
             if record is None:
@@ -68,15 +64,17 @@ class Database:
             session.commit()
 
     def mark_inactive(self, fingerprints: list[str]) -> int:
-        """Mark a batch of errors as inactive. Returns count updated."""
+        """Mark a batch of errors as inactive and record when they were resolved."""
         if not fingerprints:
             return 0
+        now = datetime.now(timezone.utc)
         with self._session() as session:
             records = session.exec(
                 select(ErrorRecord).where(ErrorRecord.fingerprint.in_(fingerprints))
             ).all()
             for record in records:
                 record.status = ErrorStatus.INACTIVE
+                record.resolved_at = now
             session.commit()
             return len(records)
 
@@ -85,11 +83,6 @@ class Database:
     # -------------------------------------------------------------------------
 
     def upsert_hourly_stat(self, fingerprint: str, count: int, hour: datetime | None = None) -> None:
-        """
-        Record occurrence count for a given error in the current hour.
-        If called multiple times in the same hour (e.g. during testing),
-        the count is accumulated.
-        """
         bucket = _truncate_to_hour(hour or datetime.now(timezone.utc))
         with self._session() as session:
             existing = session.exec(
@@ -97,16 +90,10 @@ class Database:
                 .where(ErrorHourlyStat.fingerprint == fingerprint)
                 .where(ErrorHourlyStat.hour == bucket)
             ).first()
-
             if existing is None:
-                session.add(ErrorHourlyStat(
-                    fingerprint=fingerprint,
-                    hour=bucket,
-                    count=count,
-                ))
+                session.add(ErrorHourlyStat(fingerprint=fingerprint, hour=bucket, count=count))
             else:
                 existing.count += count
-
             session.commit()
 
     # -------------------------------------------------------------------------
@@ -126,7 +113,6 @@ class Database:
             ).all()
 
     def get_stale_fingerprints(self, older_than: datetime) -> list[str]:
-        """Return fingerprints of non-inactive errors not seen since `older_than`."""
         with self._session() as session:
             records = session.exec(
                 select(ErrorRecord)
@@ -136,7 +122,6 @@ class Database:
             return [r.fingerprint for r in records]
 
     def get_all_active(self) -> list[ErrorRecord]:
-        """All non-inactive errors, for the daily digest."""
         with self._session() as session:
             return session.exec(
                 select(ErrorRecord)
@@ -144,16 +129,25 @@ class Database:
                 .order_by(ErrorRecord.occurrence_count.desc())
             ).all()
 
+    def get_recently_resolved(self, since: datetime | None = None) -> list[ErrorRecord]:
+        """
+        Return errors that went inactive on or after `since`.
+        Defaults to start of today (UTC) — i.e. "resolved today".
+        """
+        cutoff = since or _start_of_day(datetime.now(timezone.utc))
+        with self._session() as session:
+            return session.exec(
+                select(ErrorRecord)
+                .where(ErrorRecord.status == ErrorStatus.INACTIVE)
+                .where(ErrorRecord.resolved_at >= cutoff)
+                .order_by(ErrorRecord.resolved_at.desc())
+            ).all()
+
     # -------------------------------------------------------------------------
     # Reads — hourly stats
     # -------------------------------------------------------------------------
 
-    def get_hourly_stats(
-        self,
-        fingerprint: str,
-        hours: int = 48,
-    ) -> list[ErrorHourlyStat]:
-        """Return up to `hours` most recent hourly stat rows for an error."""
+    def get_hourly_stats(self, fingerprint: str, hours: int = 48) -> list[ErrorHourlyStat]:
         since = _truncate_to_hour(datetime.now(timezone.utc)) - timedelta(hours=hours - 1)
         with self._session() as session:
             return session.exec(
@@ -163,15 +157,7 @@ class Database:
                 .order_by(ErrorHourlyStat.hour.asc())
             ).all()
 
-    def get_hourly_stats_bulk(
-        self,
-        fingerprints: list[str],
-        hours: int = 48,
-    ) -> dict[str, list[ErrorHourlyStat]]:
-        """
-        Fetch hourly stats for multiple errors in a single query.
-        Returns a dict keyed by fingerprint.
-        """
+    def get_hourly_stats_bulk(self, fingerprints: list[str], hours: int = 48) -> dict[str, list[ErrorHourlyStat]]:
         if not fingerprints:
             return {}
         since = _truncate_to_hour(datetime.now(timezone.utc)) - timedelta(hours=hours - 1)
@@ -182,7 +168,6 @@ class Database:
                 .where(ErrorHourlyStat.hour >= since)
                 .order_by(ErrorHourlyStat.hour.asc())
             ).all()
-
         result: dict[str, list[ErrorHourlyStat]] = {fp: [] for fp in fingerprints}
         for row in rows:
             result[row.fingerprint].append(row)

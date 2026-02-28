@@ -14,10 +14,6 @@ class ErrorStatus(str, Enum):
     INACTIVE = "inactive"
 
 
-# ---------------------------------------------------------------------------
-# Non-persisted dataclass: represents a single parsed log entry
-# ---------------------------------------------------------------------------
-
 @dataclass
 class LogEvent:
     """A single parsed log entry, potentially spanning multiple raw lines."""
@@ -31,10 +27,6 @@ class LogEvent:
     line_number: Optional[int] = None
 
 
-# ---------------------------------------------------------------------------
-# Pydantic model: structured LLM output, stored as JSON column
-# ---------------------------------------------------------------------------
-
 class ErrorAnalysis(BaseModel):
     """Structured output from LLM analysis. Stored as a JSON column."""
     short_description: str
@@ -42,10 +34,6 @@ class ErrorAnalysis(BaseModel):
     suggested_fix: str
     confidence: str  # "high" | "medium" | "low"
 
-
-# ---------------------------------------------------------------------------
-# SQLModel table: the core persisted entity
-# ---------------------------------------------------------------------------
 
 class ErrorRecord(SQLModel, table=True):
     __tablename__ = "errors"
@@ -61,15 +49,14 @@ class ErrorRecord(SQLModel, table=True):
     last_seen: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: ErrorStatus = Field(default=ErrorStatus.NEW)
 
+    # Set when the error transitions to INACTIVE — drives the "resolved today" diff
+    resolved_at: Optional[datetime] = Field(default=None)
+
     analysis: Optional[ErrorAnalysis] = Field(
         default=None,
         sa_column=Column(JSON, nullable=True),
     )
 
-
-# ---------------------------------------------------------------------------
-# SQLModel table: per-hour occurrence counts for trend sparklines
-# ---------------------------------------------------------------------------
 
 class ErrorHourlyStat(SQLModel, table=True):
     __tablename__ = "error_hourly_stats"
@@ -77,6 +64,5 @@ class ErrorHourlyStat(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     fingerprint: str = Field(index=True)
-    # Truncated to the start of the hour, always UTC
     hour: datetime
     count: int = Field(default=0)
