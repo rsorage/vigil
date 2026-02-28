@@ -81,12 +81,17 @@ def _build_diff(
     - ongoing:  active and first_seen < start of report_date
     - resolved: went inactive on report_date
     """
-    day_start = _start_of_day(
-        datetime(report_date.year, report_date.month, report_date.day, tzinfo=timezone.utc)
-    )
+    # day_start as naive UTC — SQLite strips tzinfo on read, so we compare
+    # naive datetimes throughout to avoid offset-naive vs offset-aware errors.
+    day_start = datetime(report_date.year, report_date.month, report_date.day)
 
-    new_errors     = [r for r in active if r.first_seen and r.first_seen >= day_start]
-    ongoing_errors = [r for r in active if not r.first_seen or r.first_seen < day_start]
+    def _naive(dt: datetime | None) -> datetime | None:
+        if dt is None:
+            return None
+        return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+    new_errors     = [r for r in active if _naive(r.first_seen) and _naive(r.first_seen) >= day_start]
+    ongoing_errors = [r for r in active if not _naive(r.first_seen) or _naive(r.first_seen) < day_start]
 
     return {
         "new_count":      len(new_errors),

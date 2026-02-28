@@ -13,7 +13,8 @@ def _truncate_to_hour(dt: datetime) -> datetime:
 
 
 def _start_of_day(dt: datetime) -> datetime:
-    return dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+    # Return naive UTC — SQLite strips tzinfo, so we keep comparisons naive
+    return dt.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
 
 
 class Database:
