@@ -19,6 +19,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def analyze_single_error(db: Database, error, provider=None):
+    """
+    Run LLM analysis on a single ErrorRecord and persist the result.
+    Returns the ErrorAnalysis on success, raises on failure.
+    Extracted so both digest.py and the CLI can call it directly.
+    """
+    if provider is None:
+        provider = get_provider()
+    code_context = read_context_for_error(error.file_path, error.line_number)
+    analysis = provider.analyze_error(error, code_context)
+    db.save_analysis(error.fingerprint, analysis)
+    return analysis
+
+
 def analyze_new_errors(db: Database) -> int:
     """
     Run LLM analysis on all NEW errors, persist results, and return count.
@@ -37,29 +51,14 @@ def analyze_new_errors(db: Database) -> int:
     for error in new_errors:
         try:
             code_context = read_context_for_error(error.file_path, error.line_number)
-
             if code_context:
-                logger.info(
-                    "  [%s] sending with code context (%d chars)",
-                    error.fingerprint,
-                    len(code_context),
-                )
+                logger.info("  [%s] sending with code context (%d chars)", error.fingerprint, len(code_context))
             else:
-                logger.info(
-                    "  [%s] sending without code context (no file/line resolved)",
-                    error.fingerprint,
-                )
+                logger.info("  [%s] sending without code context (no file/line resolved)", error.fingerprint)
 
-            analysis = provider.analyze_error(error, code_context)
-            db.save_analysis(error.fingerprint, analysis)
+            analysis = analyze_single_error(db, error, provider)
             analyzed += 1
-
-            logger.info(
-                "  [%s] ✓ confidence=%s — %s",
-                error.fingerprint,
-                analysis.confidence,
-                analysis.short_description,
-            )
+            logger.info("  [%s] ✓ confidence=%s — %s", error.fingerprint, analysis.confidence, analysis.short_description)
 
         except Exception as e:
             logger.error("  [%s] analysis failed: %s", error.fingerprint, e)

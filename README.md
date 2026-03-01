@@ -136,12 +136,14 @@ directly from the terminal — useful when you're already SSHed in and don't wan
 to a browser.
 
 ```bash
-uv run vigil --help                        # list available commands
-uv run vigil list-errors                   # list all active errors
-uv run vigil list-errors --all             # include inactive errors
-uv run vigil describe-error                # full detail for one error (fingerprint prefix)
-uv run vigil describe-error  --hours 24    # tighter chart window
-uv run vigil delete-error                  # hard-delete a record
+uv run vigil --help                      # list available commands
+uv run vigil list-errors                 # list all active errors
+uv run vigil list-errors --all           # include inactive errors
+uv run vigil describe-error              # full detail for one error (fingerprint prefix)
+uv run vigil describe-error  --hours 24  # tighter chart window
+uv run vigil analyze-error               # run LLM analysis immediately
+uv run vigil analyze-error  --force      # re-analyze even if already done
+uv run vigil delete-error                # hard-delete a record
 ```
 
 The fingerprint prefix just needs to be long enough to be unambiguous — usually 4–6 characters.
@@ -150,9 +152,9 @@ If it matches more than one error, Vigil will tell you.
 ### GitHub integration
 
 ```bash
-uv run vigil open-issue            # open an issue on your app repo
-uv run vigil open-issue  -y        # skip confirmation prompt
-uv run vigil list-issues           # list all errors with open/closed issues
+uv run vigil open-issue                  # open an issue on your app repo
+uv run vigil open-issue  -y              # skip confirmation prompt
+uv run vigil list-issues                 # list all errors with open/closed issues
 ```
 
 `open-issue` pre-fills the issue with everything Vigil knows about the error: the LLM analysis,

@@ -319,6 +319,60 @@ def delete_error(prefix: str, yes: bool):
     console.print()
 
 
+
+# ── vigil analyze-error ───────────────────────────────────────────────────────
+
+@cli.command("analyze-error")
+@click.argument("prefix")
+@click.option("--force", "-f", is_flag=True, help="Re-analyze even if already analyzed.")
+def analyze_error(prefix: str, force: bool):
+    """Run LLM analysis immediately for a single error."""
+    from digest import analyze_single_error
+
+    db = _get_db()
+    record = _resolve_fingerprint(db, prefix)
+    if record is None:
+        return
+
+    if record.status.value == "analyzed" and not force:
+        console.print(
+            f"[yellow]Already analyzed.[/yellow] Use [bold]--force[/bold] to re-analyze."
+        )
+        return
+
+    if record.status.value == "inactive":
+        console.print("[yellow]Warning:[/yellow] this error is inactive (not seen recently).")
+
+    console.print()
+    console.print(f"  [dim]fingerprint[/dim]  {record.fingerprint}")
+    console.print(f"  [dim]logger[/dim]       {record.logger_name}")
+    if record.file_path:
+        console.print(f"  [dim]file[/dim]         {record.file_path}:{record.line_number}")
+    console.print()
+
+    with console.status("Analyzing with LLM..."):
+        try:
+            analysis = analyze_single_error(db, record)
+        except Exception as e:
+            console.print(f"[red]Analysis failed:[/red] {e}")
+            return
+
+    console.print(f"[green]✓[/green] Analysis complete  [dim]confidence: {analysis.confidence}[/dim]")
+    console.print()
+    console.print(Panel(
+        Text(analysis.short_description, style="white"),
+        title="[dim]what happened[/dim]", border_style="dim", padding=(0, 1),
+    ))
+    console.print(Panel(
+        Text(analysis.root_cause, style="white"),
+        title="[dim]root cause[/dim]", border_style="dim", padding=(0, 1),
+    ))
+    console.print(Panel(
+        Text(analysis.suggested_fix or "—", style="white"),
+        title="[dim]suggested fix[/dim]", border_style="green", padding=(0, 1),
+    ))
+    console.print()
+
 # ── vigil open-issue ──────────────────────────────────────────────────────────
 
 @cli.command("open-issue")
