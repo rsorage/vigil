@@ -39,6 +39,25 @@ def _confidence_style(confidence: str) -> str:
     return {"high": "bold green", "medium": "yellow", "low": "red"}.get(confidence, "white")
 
 
+def _align_to_buckets(stats: list, hours: int = 24) -> list[int]:
+    """
+    Map stat rows onto a fixed-size hourly grid ending at the current hour.
+    Missing buckets are filled with zero so the sparkline position reflects
+    real time rather than just the order rows were inserted.
+    """
+    now_bucket = _truncate_to_hour(datetime.now(timezone.utc))
+    buckets: dict[datetime, int] = {}
+    for i in range(hours):
+        b = now_bucket - timedelta(hours=hours - 1 - i)
+        buckets[b] = 0
+    for s in stats:
+        hour = s.hour.replace(tzinfo=timezone.utc) if s.hour.tzinfo is None else s.hour
+        b = _truncate_to_hour(hour)
+        if b in buckets:
+            buckets[b] = s.count
+    return list(buckets.values())
+
+
 def _sparkline(counts: list[int], width: int = 30) -> Text:
     """Render a unicode block sparkline from a list of counts."""
     blocks = " ▁▂▃▄▅▆▇█"
@@ -188,7 +207,7 @@ def list_errors(show_all: bool):
 
     for e in errors:
         stats = stats_by_fp.get(e.fingerprint, [])
-        counts = [s.count for s in stats]
+        counts = _align_to_buckets(stats, hours=24)
         spark = _sparkline(counts, width=28)
 
         confidence = e.analysis.get("confidence") if isinstance(e.analysis, dict) else (
