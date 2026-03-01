@@ -116,16 +116,25 @@
     .logger-name { font-family: var(--mono); font-size: 13px; color: var(--amber); word-break: break-all; }
     .file-ref { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
     .file-ref span { color: var(--blue); }
-    .card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .card-badges { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    /* Generic badge — used for issue links etc */
     .badge { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 3px; white-space: nowrap; font-weight: 500; }
-    .badge-count    { background: var(--border); color: var(--text); }
-    .badge-high     { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-medium   { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--amber-dim); }
-    .badge-low      { background: var(--red-dim);   color: var(--red);   border: 1px solid var(--red-dim); }
-    .badge-new      { background: var(--blue-dim);  color: var(--blue);  border: 1px solid var(--blue-dim); }
-    .badge-analyzed { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
-    .badge-inactive { background: var(--border);    color: var(--text-dim); }
-    .badge-resolved { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-dim); }
+    /* Occurrence count — plain text, not a pill */
+    .badge-count { font-size: 13px; color: var(--text-dim); font-weight: 500; letter-spacing: -0.02em; }
+    .badge-count strong { color: var(--text-hi); }
+    /* Confidence pills */
+    .badge-high   { font-size: 11px; padding: 2px 7px; border-radius: 3px; font-weight: 600; letter-spacing: 0.03em; background: var(--green-dim); color: var(--green); }
+    .badge-medium { font-size: 11px; padding: 2px 7px; border-radius: 3px; font-weight: 600; letter-spacing: 0.03em; background: var(--amber-dim); color: var(--amber); }
+    .badge-low    { font-size: 11px; padding: 2px 7px; border-radius: 3px; font-weight: 600; letter-spacing: 0.03em; background: var(--red-dim);   color: var(--red); }
+    /* New-today pill — rounded, compact */
+    .badge-new { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(77,142,240,0.25); }
+    /* Status icons — replaces text pills */
+    .status-icon { font-size: 12px; }
+    .status-icon.analyzed { color: var(--green); }
+    .status-icon.new      { color: var(--blue); }
+    .status-icon.inactive { color: var(--text-dim); }
+    /* Vertical divider between badge groups */
+    .badge-divider { width: 1px; height: 16px; background: var(--border-hi); }
 
     /* ── Sparkline ── */
     .sparkline-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; position: relative; }
@@ -345,10 +354,16 @@
           <a href="{{ error.github_issue_url }}" target="_blank" rel="noopener"
              class="badge" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-dim);text-decoration:none;">⎋ #{{ issue_num }}</a>
           {% endif %}
-          {% if is_new %}<span class="badge badge-new">new today</span>{% endif %}
-          <span class="badge badge-count">×{{ error.occurrence_count }}</span>
-          {% if error.analysis %}<span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>{% endif %}
-          <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
+          {% if is_new %}<span class="badge badge-new">new</span>{% endif %}
+          <span class="badge-count">×<strong>{{ error.occurrence_count }}</strong></span>
+          {% if error.analysis %}
+          <span class="badge-divider"></span>
+          <span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>
+          <span class="status-icon analyzed" title="analyzed">✓</span>
+          {% else %}
+          <span class="badge-divider"></span>
+          <span class="status-icon new" title="pending analysis">●</span>
+          {% endif %}
         </div>
         <span class="card-chevron">▶</span>
       </div>
