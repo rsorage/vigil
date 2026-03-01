@@ -332,6 +332,11 @@
             </div>
           </div>
           {% endif %}
+          {% if error.github_issue_url %}
+          {% set issue_num = error.github_issue_url.rstrip('/').split('/')[-1] %}
+          <a href="{{ error.github_issue_url }}" target="_blank" rel="noopener"
+             class="badge" style="background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-dim);text-decoration:none;">⎋ #{{ issue_num }}</a>
+          {% endif %}
           {% if is_new %}<span class="badge badge-new">new today</span>{% endif %}
           <span class="badge badge-count">×{{ error.occurrence_count }}</span>
           {% if error.analysis %}<span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>{% endif %}

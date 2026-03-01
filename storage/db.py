@@ -130,6 +130,24 @@ class Database:
                 .order_by(ErrorRecord.occurrence_count.desc())
             ).all()
 
+    def save_github_issue_url(self, fingerprint: str, url: str) -> None:
+        """Persist the GitHub issue URL on an error record."""
+        with self._session() as session:
+            record = session.get(ErrorRecord, fingerprint)
+            if record is None:
+                raise ValueError(f"No error found with fingerprint {fingerprint!r}")
+            record.github_issue_url = url
+            session.commit()
+
+    def get_errors_with_issues(self) -> list[ErrorRecord]:
+        """Return all errors that have an associated GitHub issue URL."""
+        with self._session() as session:
+            return session.exec(
+                select(ErrorRecord)
+                .where(ErrorRecord.github_issue_url.is_not(None))
+                .order_by(ErrorRecord.last_seen.desc())
+            ).all()
+
     def get_recently_resolved(self, since: datetime | None = None) -> list[ErrorRecord]:
         """
         Return errors that went inactive on or after `since`.

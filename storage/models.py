@@ -52,6 +52,9 @@ class ErrorRecord(SQLModel, table=True):
     # Set when the error transitions to INACTIVE — drives the "resolved today" diff
     resolved_at: Optional[datetime] = Field(default=None)
 
+    # Set when a GitHub issue is opened via `vigil github open-issue`
+    github_issue_url: Optional[str] = Field(default=None)
+
     analysis: Optional[ErrorAnalysis] = Field(
         default=None,
         sa_column=Column(JSON, nullable=True),

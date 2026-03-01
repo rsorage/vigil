@@ -130,6 +130,7 @@ def _serialise_error(r: ErrorRecord, sparkline: dict) -> dict:
         "first_seen":       r.first_seen,
         "last_seen":        r.last_seen,
         "resolved_at":      r.resolved_at if hasattr(r, "resolved_at") else None,
+        "github_issue_url": r.github_issue_url if hasattr(r, "github_issue_url") else None,
         "status":           r.status.value,
         "analysis":         _analysis_dict(r),
         "sparkline":        sparkline,

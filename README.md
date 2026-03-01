@@ -45,6 +45,8 @@ vigil/
 │   ├── deduplicator.py    # fingerprinting + normalization
 │   ├── code_reader.py     # traceback path → source code context
 │   └── state_manager.py   # hourly stat writes + inactive transitions
+├── integrations/
+│   └── github.py          # GitHub API — open/fetch issues, build issue body
 ├── llm/
 │   ├── base.py            # abstract LLMProvider interface
 │   ├── claude.py          # Anthropic implementation (tool use)
@@ -58,6 +60,7 @@ vigil/
 │       ├── digest.html    # daily report template
 │       └── index.html     # report archive index
 ├── reports/               # generated reports (YYYY-MM-DD.html)
+├── cli.py                 # terminal interface (vigil errors / vigil error / vigil github)
 ├── config.py              # pydantic-settings, .env-driven
 ├── hourly.py              # cron entry: collect → parse → dedup → persist → render
 └── digest.py              # cron entry: analyze → render report
@@ -101,6 +104,8 @@ All configuration is via `.env`. Copy `.env.example` to get started.
 | `APP_CONTAINER_PATH` | Container path prefix to strip when mapping tracebacks | `/app` |
 | `ERROR_INACTIVE_AFTER_HOURS` | Hours before unseen errors go inactive | `48` |
 | `REPORTS_DIR` | Where to write HTML reports | `reports/` |
+| `GITHUB_TOKEN` | Personal access token with `issues: write` scope | — |
+| `GITHUB_REPO` | Target repository for issues, e.g. `owner/your-app-repo` | — |
 
 ## Cron setup
 
@@ -123,6 +128,51 @@ CRON_TZ=America/Sao_Paulo
 
 > **Note**: If `uv` is not on cron's `PATH`, use its full path. Run `which uv` to find it —
 > usually `~/.local/bin/uv` or `~/.cargo/bin/uv`.
+
+## CLI
+
+After `uv sync`, Vigil ships a `vigil` command for inspecting errors and managing GitHub issues
+directly from the terminal — useful when you're already SSHed in and don't want to context-switch
+to a browser.
+
+```bash
+uv run vigil --help                        # list available commands
+uv run vigil errors                        # list all active errors
+uv run vigil errors --all                  # include resolved errors
+uv run vigil error                 # full detail for one error (fingerprint prefix)
+uv run vigil error  --hours 24     # tighter chart window
+```
+
+The fingerprint prefix just needs to be long enough to be unambiguous — usually 4–6 characters.
+If it matches more than one error, Vigil will tell you.
+
+### GitHub integration
+
+```bash
+uv run vigil github open-issue     # open an issue on your app repo
+uv run vigil github open-issue  -y # skip confirmation prompt
+uv run vigil github list-issues            # list all errors with open/closed issues
+```
+
+`open-issue` pre-fills the issue with everything Vigil knows about the error: the LLM analysis,
+root cause, suggested fix, occurrence count, file location, and a collapsible traceback. Issues
+are linked back to the error record so Vigil won't open duplicates. The issue URL also appears as
+a badge on the HTML digest and in `vigil error` detail view.
+
+Requires `GITHUB_TOKEN` (needs `issues: write` scope only) and `GITHUB_REPO` set in `.env`.
+The token should target your **app repo**, not the Vigil repo.
+
+**Optional: add `vigil` to your PATH** so you can drop the `uv run` prefix:
+
+```bash
+echo 'export PATH="/path/to/vigil/.venv/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Then just
+vigil errors
+vigil error cd6f
+vigil github open-issue cd6f
+```
 
 ## Serving reports with nginx
 
@@ -199,9 +249,9 @@ uv run pytest tests/ -v
 
 ## Roadmap
 
+- [x] GitHub integration — open issues for errors directly from the CLI
 - [ ] Spike alerting — Telegram/Slack notification when a new error fingerprint appears
 - [ ] Regression detection — flag errors that reactivate after being resolved
-- [ ] GitHub integration — auto-open issues for new errors
 - [ ] Autofix agent — Claude Agent SDK opens a draft PR with a proposed fix for high-confidence errors
 
 ## License

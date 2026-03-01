@@ -84,7 +84,7 @@ def main() -> None:
         len(new_remaining),
     )
 
-    report_path = write_digest(active)
+    report_path = write_digest(active, db=db)
     logger.info("Report available at %s", report_path)
 
 

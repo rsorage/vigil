@@ -190,6 +190,8 @@ def list_errors(show_all: bool):
     fingerprints = [e.fingerprint for e in errors]
     stats_by_fp = db.get_hourly_stats_bulk(fingerprints, hours=24)
 
+    has_issues = any(e.github_issue_url for e in errors)
+
     table = Table(
         box=box.SIMPLE_HEAD,
         show_header=True,
@@ -204,6 +206,8 @@ def list_errors(show_all: bool):
     table.add_column("CONFIDENCE", width=10)
     table.add_column("LAST SEEN", width=17)
     table.add_column("24H TREND", width=30, no_wrap=True)
+    if has_issues:
+        table.add_column("ISSUE", width=6)
 
     for e in errors:
         stats = stats_by_fp.get(e.fingerprint, [])
@@ -215,7 +219,16 @@ def list_errors(show_all: bool):
         )
         last_seen = e.last_seen.strftime("%m-%d %H:%M") if e.last_seen else "—"
 
-        table.add_row(
+        issue_cell = ""
+        if has_issues:
+            if e.github_issue_url:
+                # Extract issue number from URL
+                num = e.github_issue_url.rstrip("/").split("/")[-1]
+                issue_cell = Text(f"#{num}", style="blue")
+            else:
+                issue_cell = Text("—", style="dim")
+
+        row_cells = [
             e.fingerprint[:8],
             e.logger_name,
             str(e.occurrence_count),
@@ -223,7 +236,10 @@ def list_errors(show_all: bool):
             Text(confidence or "—", style=_confidence_style(confidence or "")),
             last_seen,
             spark,
-        )
+        ]
+        if has_issues:
+            row_cells.append(issue_cell)
+        table.add_row(*row_cells)
 
     console.print()
     console.print(table)
@@ -279,6 +295,8 @@ def error_detail(prefix: str, hours: int):
     meta.add_row("last seen",   str(record.last_seen)[:16]  if record.last_seen  else "—")
     if record.status == ErrorStatus.INACTIVE and record.resolved_at:
         meta.add_row("resolved at", str(record.resolved_at)[:16])
+    if record.github_issue_url:
+        meta.add_row("github issue", record.github_issue_url)
     console.print(meta)
     console.print()
 
@@ -359,6 +377,130 @@ def error_detail(prefix: str, hours: int):
 
     console.print()
 
+
+
+# ── vigil github ──────────────────────────────────────────────────────────────
+
+@cli.group()
+def github():
+    """Manage GitHub issues for Vigil errors."""
+    pass
+
+
+@github.command("open-issue")
+@click.argument("prefix")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt.")
+def github_open_issue(prefix: str, yes: bool):
+    """Open a GitHub issue for an error by fingerprint prefix."""
+    from integrations.github import build_issue, open_issue as gh_open_issue
+
+    # Validate config first
+    if not config.github_token or not config.github_repo:
+        console.print(
+            "[red]Error:[/red] GITHUB_TOKEN and GITHUB_REPO must be set in .env "
+            "to use GitHub integration."
+        )
+        return
+
+    db = _get_db()
+    record = _resolve_fingerprint(db, prefix)
+    if record is None:
+        return
+
+    # Guard against duplicates
+    if record.github_issue_url:
+        console.print(
+            f"[yellow]An issue already exists for this error:[/yellow] "
+            f"{record.github_issue_url}"
+        )
+        return
+
+    title, body = build_issue(record)
+
+    console.print()
+    console.print(f"  [dim]repo[/dim]   {config.github_repo}")
+    console.print(f"  [dim]title[/dim]  {title}")
+    console.print()
+
+    if not yes:
+        click.confirm(
+            f"Open issue on {config.github_repo}?",
+            default=False,
+            abort=True,
+        )
+
+    with console.status("Opening issue..."):
+        try:
+            url = gh_open_issue(config.github_token, config.github_repo, title, body)
+        except RuntimeError as e:
+            console.print(f"[red]Failed to open issue:[/red] {e}")
+            return
+
+    db.save_github_issue_url(record.fingerprint, url)
+    console.print(f"[green]✓[/green] Issue opened: [bold]{url}[/bold]")
+    console.print()
+
+
+@github.command("list-issues")
+def github_list_issues():
+    """List all errors that have an associated GitHub issue."""
+    from integrations.github import get_issue
+
+    if not config.github_token:
+        console.print(
+            "[red]Error:[/red] GITHUB_TOKEN must be set in .env "
+            "to use GitHub integration."
+        )
+        return
+
+    db = _get_db()
+    records = db.get_errors_with_issues()
+
+    if not records:
+        console.print("[dim]No GitHub issues opened from Vigil yet.[/dim]")
+        return
+
+    table = Table(
+        box=box.SIMPLE_HEAD,
+        show_header=True,
+        header_style="bold dim",
+        pad_edge=False,
+        expand=True,
+    )
+    table.add_column("FINGERPRINT", style="dim", width=10, no_wrap=True)
+    table.add_column("TITLE", ratio=3)
+    table.add_column("COUNT", justify="right", width=7)
+    table.add_column("STATE", width=8)
+    table.add_column("URL", ratio=2)
+
+    for record in records:
+        title = "—"
+        state = "?"
+        state_style = "dim"
+
+        try:
+            issue = get_issue(config.github_token, record.github_issue_url)
+            title = issue.get("title", "—")[:80]
+            state = issue.get("state", "?")
+            state_style = "green" if state == "open" else "dim"
+        except RuntimeError:
+            state = "error"
+            state_style = "red"
+
+        table.add_row(
+            record.fingerprint[:8],
+            title,
+            str(record.occurrence_count),
+            Text(state, style=state_style),
+            record.github_issue_url or "—",
+        )
+
+    console.print()
+    console.print(table)
+    console.print(
+        f"  [dim]{len(records)} issue{'s' if len(records) != 1 else ''}[/dim]"
+    )
+    console.print()
 
 if __name__ == "__main__":
     cli()

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -30,6 +32,10 @@ class Config(BaseSettings):
 
     # Error lifecycle
     error_inactive_after_hours: int = Field(default=48)
+
+    # GitHub integration (optional)
+    github_token: Optional[str] = Field(default=None)
+    github_repo: Optional[str] = Field(default=None)  # e.g. "owner/repo"
 
     # Reporting
     reports_dir: str = Field(default="reports")
