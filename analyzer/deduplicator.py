@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 # Patterns to strip from messages before fingerprinting.
 # Order matters: more specific patterns first.
 _NORMALIZATIONS: list[tuple[re.Pattern, str]] = [
+    # Timestamps — must run before floats/ints to avoid partial mangling
+    # Matches: 2026-03-01T20:31:31.563264+00:00, 2026-03-01 20:31:31Z, etc.
+    (re.compile(r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?'), '<ts>'),
     # IDs: tenant_id=ten_abc123, device_id=dev_XYZ
     (re.compile(r'\b(tenant_id|device_id|user_id|session_id)=\S+'), r'\1=<id>'),
     # Prefixed IDs: ten_Abc123, dev_XYZ789, usr_..., etc.
@@ -23,8 +26,6 @@ _NORMALIZATIONS: list[tuple[re.Pattern, str]] = [
     (re.compile(r'\b\d{1,3}(?:\.\d{1,3}){3}(:\d+)?\b'), '<ip>'),
     # Port numbers standalone
     (re.compile(r':\d{4,5}\b'), ':<port>'),
-    # Timestamps inside messages
-    (re.compile(r'\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?'), '<ts>'),
     # Firmware / semver versions
     (re.compile(r'\b\d+\.\d+\.\d+\b'), '<version>'),
     # Quoted string values (e.g. JSON field values)

@@ -130,6 +130,22 @@ class Database:
                 .order_by(ErrorRecord.occurrence_count.desc())
             ).all()
 
+    def delete_error(self, fingerprint: str) -> bool:
+        """Hard-delete an error record and its hourly stats. Returns True if found."""
+        with self._session() as session:
+            record = session.get(ErrorRecord, fingerprint)
+            if record is None:
+                return False
+            session.delete(record)
+            # Also delete hourly stats
+            stats = session.exec(
+                select(ErrorHourlyStat).where(ErrorHourlyStat.fingerprint == fingerprint)
+            ).all()
+            for s in stats:
+                session.delete(s)
+            session.commit()
+            return True
+
     def save_github_issue_url(self, fingerprint: str, url: str) -> None:
         """Persist the GitHub issue URL on an error record."""
         with self._session() as session:
