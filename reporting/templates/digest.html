@@ -110,7 +110,8 @@
     /* New-today highlight — subtle left accent */
     .error-card.is-new { border-left: 3px solid var(--blue); }
 
-    .card-header { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); }
+    .card-header { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+    .card-header:hover { background: rgba(255,255,255,0.02); }
     .card-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .logger-name { font-family: var(--mono); font-size: 13px; color: var(--amber); word-break: break-all; }
     .file-ref { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
@@ -139,7 +140,10 @@
     .spark-tooltip-row.nonzero { color: var(--text-hi); }
 
     /* ── Card body ── */
-    .card-body { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+    .card-body { padding: 20px; display: none; flex-direction: column; gap: 20px; }
+    .card-body.open { display: flex; }
+    .card-chevron { font-size: 10px; color: var(--text-dim); flex-shrink: 0; transition: transform 0.2s; margin-top: 2px; }
+    .error-card.expanded .card-chevron { transform: rotate(90deg); }
     .message-block { background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; font-family: var(--mono); font-size: 13px; color: var(--text); white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .meta-row { display: flex; gap: 24px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); flex-wrap: wrap; }
     .meta-row span { color: var(--text); }
@@ -287,6 +291,10 @@
       <option value="first_seen-asc">first seen ↑</option>
     </select>
     <span class="results-count" id="results-count"></span>
+    <div style="display:flex;gap:4px;margin-left:8px;">
+      <button class="pill" onclick="expandAll()" title="Expand all">⊞ expand</button>
+      <button class="pill" onclick="collapseAll()" title="Collapse all">⊟ collapse</button>
+    </div>
   </div>
 </div>
 {% endif %}
@@ -305,7 +313,7 @@
       data-last-seen="{{ error.last_seen.isoformat() if error.last_seen else '' }}"
       data-is-new="{{ 'true' if is_new else 'false' }}"
     >
-      <div class="card-header">
+      <div class="card-header" onclick="toggleCard(this)">
         <div class="card-header-left">
           <div class="logger-name">{{ error.logger_name }}</div>
           {% if error.file_path %}
@@ -342,6 +350,7 @@
           {% if error.analysis %}<span class="badge badge-{{ error.analysis.confidence }}">{{ error.analysis.confidence }}</span>{% endif %}
           <span class="badge badge-{{ error.status }}">{{ error.status }}</span>
         </div>
+        <span class="card-chevron">▶</span>
       </div>
 
       <div class="card-body">
@@ -390,7 +399,7 @@
     <div class="resolved-list">
       {% for error in resolved_today %}
       <div class="error-card">
-        <div class="card-header">
+        <div class="card-header" onclick="toggleCard(this)">
           <div class="card-header-left">
             <div class="logger-name">{{ error.logger_name }}</div>
             {% if error.file_path %}<div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>{% endif %}
@@ -401,6 +410,7 @@
             {% if error.resolved_at %}
             <span class="badge" style="background:var(--border);color:var(--text-dim)">{{ error.resolved_at.strftime('%H:%M') }}</span>
             {% endif %}
+          <span class="card-chevron">▶</span>
           </div>
         </div>
         <div class="card-body">
@@ -548,6 +558,24 @@
       toggle.classList.add('open');
       rlist.classList.add('open');
     }
+  }
+
+  function toggleCard(header) {
+    const card = header.closest('.error-card');
+    const body = card.querySelector('.card-body');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    card.classList.toggle('expanded', !isOpen);
+  }
+
+  function expandAll() {
+    document.querySelectorAll('#error-list .card-body').forEach(b => b.classList.add('open'));
+    document.querySelectorAll('#error-list .error-card').forEach(c => c.classList.add('expanded'));
+  }
+
+  function collapseAll() {
+    document.querySelectorAll('#error-list .card-body').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('#error-list .error-card').forEach(c => c.classList.remove('expanded'));
   }
 
   function toggleTraceback(btn) {
