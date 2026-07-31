@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -6,6 +7,24 @@ from typing import Generator, Optional
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from storage.models import ErrorAnalysis, ErrorHourlyStat, ErrorRecord, ErrorStatus
+
+logger = logging.getLogger(__name__)
+
+# Additive schema changes applied on every initialize(), in order.
+# SQLModel.create_all() only creates missing tables — it never adds a column to
+# a table that already exists, so a new field on an existing model needs an
+# entry here or reads against an older errors.db fail with "no such column".
+#
+# Keep every migration idempotent and additive: the column is added only when
+# absent, so running against a fresh database (where create_all already built
+# the current schema) is a no-op.
+_MIGRATIONS: list[tuple[str, str, str]] = [
+    (
+        "errors",
+        "service",
+        "ALTER TABLE errors ADD COLUMN service VARCHAR NOT NULL DEFAULT ''",
+    ),
+]
 
 
 def _truncate_to_hour(dt: datetime) -> datetime:
@@ -36,6 +55,19 @@ class Database:
 
     def initialize(self) -> None:
         SQLModel.metadata.create_all(self.engine)
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Apply pending additive column migrations to an existing database."""
+        with self.engine.begin() as conn:
+            for table, column, ddl in _MIGRATIONS:
+                rows = conn.exec_driver_sql(f"PRAGMA table_info({table})").fetchall()
+                if not rows:
+                    continue  # table doesn't exist — create_all owns it
+                if column in {row[1] for row in rows}:
+                    continue  # already applied
+                conn.exec_driver_sql(ddl)
+                logger.info("Migration applied: %s.%s added", table, column)
 
     # -------------------------------------------------------------------------
     # Writes — errors

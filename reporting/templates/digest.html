@@ -113,7 +113,13 @@
     .card-header { padding: 16px 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
     .card-header:hover { background: rgba(255,255,255,0.02); }
     .card-header-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+    .logger-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
     .logger-name { font-family: var(--mono); font-size: 13px; color: var(--amber); word-break: break-all; }
+    /* One image, three roles — the service tag is how you tell them apart. */
+    .service-tag { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; background: var(--border); color: var(--text-dim); border: 1px solid var(--border-hi); }
+    .service-tag[data-service="api"]       { background: rgba(77,142,240,0.12); color: var(--blue); border-color: rgba(77,142,240,0.25); }
+    .service-tag[data-service="ingestion"] { background: rgba(62,207,142,0.12); color: var(--green); border-color: rgba(62,207,142,0.25); }
+    .service-tag[data-service="worker"]    { background: rgba(240,165,0,0.12);  color: var(--amber); border-color: rgba(240,165,0,0.25); }
     .file-ref { font-family: var(--mono); font-size: 12px; color: var(--text-dim); }
     .file-ref span { color: var(--blue); }
     .card-badges { display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
@@ -263,6 +269,17 @@
 
 {% if errors %}
 <div class="controls">
+  {% if services | length > 1 %}
+  <div class="control-group">
+    <span class="control-label">Service</span>
+    <div class="pill-group" id="filter-service">
+      <button class="pill active" data-value="all">all</button>
+      {% for svc in services %}
+      <button class="pill" data-value="{{ svc.name }}" title="{{ svc.occurrences }} occurrence{{ 's' if svc.occurrences != 1 }}">{{ svc.name or 'unknown' }} <span style="opacity:.6">{{ svc.unique }}</span></button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   <div class="control-group">
     <span class="control-label">Status</span>
     <div class="pill-group" id="filter-status">
@@ -317,6 +334,7 @@
       data-status="{{ error.status }}"
       data-confidence="{{ error.analysis.confidence if error.analysis else 'none' }}"
       data-trend="{{ error.sparkline.trend }}"
+      data-service="{{ error.service }}"
       data-occurrences="{{ error.occurrence_count }}"
       data-first-seen="{{ error.first_seen.isoformat() if error.first_seen else '' }}"
       data-last-seen="{{ error.last_seen.isoformat() if error.last_seen else '' }}"
@@ -324,7 +342,10 @@
     >
       <div class="card-header" onclick="toggleCard(this)">
         <div class="card-header-left">
-          <div class="logger-name">{{ error.logger_name }}</div>
+          <div class="logger-line">
+            {% if error.service %}<span class="service-tag" data-service="{{ error.service }}">{{ error.service }}</span>{% endif %}
+            <div class="logger-name">{{ error.logger_name }}</div>
+          </div>
           {% if error.file_path %}
           <div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>
           {% endif %}
@@ -416,7 +437,10 @@
       <div class="error-card">
         <div class="card-header" onclick="toggleCard(this)">
           <div class="card-header-left">
-            <div class="logger-name">{{ error.logger_name }}</div>
+            <div class="logger-line">
+              {% if error.service %}<span class="service-tag" data-service="{{ error.service }}">{{ error.service }}</span>{% endif %}
+              <div class="logger-name">{{ error.logger_name }}</div>
+            </div>
             {% if error.file_path %}<div class="file-ref">{{ error.file_path }}<span>:{{ error.line_number }}</span></div>{% endif %}
           </div>
           <div class="card-badges">
@@ -456,7 +480,7 @@
 
 <script>
   // ── State ──────────────────────────────────────────────────────────────────
-  const state = { status: 'all', confidence: 'all', trend: 'all', sort: 'occurrences-desc' };
+  const state = { service: 'all', status: 'all', confidence: 'all', trend: 'all', sort: 'occurrences-desc' };
 
   const list        = document.getElementById('error-list');
   const emptyFilter = document.getElementById('empty-filter');
@@ -474,6 +498,7 @@
       apply();
     });
   }
+  bindPillGroup('filter-service',    'service');
   bindPillGroup('filter-status',     'status');
   bindPillGroup('filter-confidence', 'confidence');
   bindPillGroup('filter-trend',      'trend');
@@ -487,6 +512,7 @@
     let visible = 0;
     cards.forEach(card => {
       const show =
+        (state.service    === 'all' || card.dataset.service    === state.service) &&
         (state.status     === 'all' || card.dataset.status     === state.status) &&
         (state.confidence === 'all' || card.dataset.confidence === state.confidence) &&
         (state.trend      === 'all' || card.dataset.trend      === state.trend);
@@ -519,10 +545,11 @@
   function filterTo(kind) {
     if (!list) return;
     // Reset all filters first
-    ['filter-status','filter-confidence','filter-trend'].forEach(id => {
+    ['filter-service','filter-status','filter-confidence','filter-trend'].forEach(id => {
       const g = document.getElementById(id);
       if (g) g.querySelectorAll('.pill').forEach((p, i) => p.classList.toggle('active', i === 0));
     });
+    state.service    = 'all';
     state.confidence = 'all';
     state.trend      = 'all';
 

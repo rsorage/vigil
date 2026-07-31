@@ -21,6 +21,9 @@ class LogEvent:
     logger_name: str
     level: str
     message: str
+    # Compose service the line came from ("api", "ingestion", "worker").
+    # Empty when logs were parsed without a service attribution.
+    service: str = ""
     raw_lines: list[str] = field(default_factory=list)
     traceback: Optional[str] = None
     file_path: Optional[str] = None
@@ -39,6 +42,11 @@ class ErrorRecord(SQLModel, table=True):
     __tablename__ = "errors"
 
     fingerprint: str = Field(primary_key=True)
+    # Which compose service raised it. All roles share one image, so the same
+    # code path can fail in api, ingestion and worker independently — service
+    # is part of the fingerprint to keep those apart. Empty on records written
+    # before multi-service collection existed.
+    service: str = Field(default="", index=True)
     logger_name: str
     message_template: str
     sample_traceback: Optional[str] = None

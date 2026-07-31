@@ -60,6 +60,10 @@ that are visible in the code.
 def _build_user_message(error: ErrorRecord, code_context: str | None) -> str:
     parts = [
         f"## Error record",
+    ]
+    if error.service:
+        parts.append(f"**Service:** `{error.service}`")
+    parts += [
         f"**Logger:** `{error.logger_name}`",
         f"**Occurrences:** {error.occurrence_count}",
         f"**First seen:** {error.first_seen}",

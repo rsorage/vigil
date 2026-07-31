@@ -64,12 +64,17 @@ def _extract_traceback_location(traceback: str) -> tuple[Optional[str], Optional
     return path, int(line)
 
 
-def parse_logs(raw: str) -> list[LogEvent]:
+def parse_logs(raw: str, service: str = "") -> list[LogEvent]:
     """
     Parse raw docker compose log output into a list of LogEvent objects.
 
     Multiline entries (tracebacks, validation error details) are grouped
     with their originating log line using the timestamp as a boundary marker.
+
+    Args:
+        raw:     Output of a single `docker compose logs` call.
+        service: Compose service the output came from. Stamped onto every
+                 event, since collection is one call per service.
     """
     events: list[LogEvent] = []
     current_lines: list[str] = []
@@ -109,6 +114,7 @@ def parse_logs(raw: str) -> list[LogEvent]:
                 logger_name=current_match.group("logger"),
                 level=level,
                 message=message,
+                service=service,
                 raw_lines=list(current_lines),
                 traceback=traceback,
                 file_path=file_path,
@@ -135,9 +141,10 @@ def parse_logs(raw: str) -> list[LogEvent]:
     flush()  # don't forget the last entry
 
     logger.info(
-        "Parsed %d log events (%d errors)",
+        "Parsed %d log events (%d errors)%s",
         len(events),
         sum(1 for e in events if e.level == "ERROR"),
+        f" from {service}" if service else "",
     )
     return events
 

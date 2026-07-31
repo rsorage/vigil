@@ -14,7 +14,7 @@ I put this together in ~4 hours with Claude Sonnet. It's running in my own produ
 
 ```mermaid
 flowchart LR
-    A([Docker logs]) --> B[Parse]
+    A([Docker logs<br/>per service]) --> B[Parse]
     B --> C[Deduplicate]
     C --> D[(SQLite)]
 
@@ -23,7 +23,8 @@ flowchart LR
     F --> G([HTML digest])
 ```
 
-- **Hourly**: Collects the last hour of logs from a Docker Compose service, parses multiline entries (tracebacks included), deduplicates errors by fingerprint, and persists them with occurrence counts and timestamps. Re-renders today's report so you always have an up-to-date view.
+- **Hourly**: Collects the last hour of logs from each watched Docker Compose service, parses multiline entries (tracebacks included), deduplicates errors by fingerprint, and persists them with occurrence counts and timestamps. Re-renders today's report so you always have an up-to-date view.
+- **Multi-service**: Watch as many compose services as you like via `DOCKER_SERVICES` — one `docker compose logs` call per service, so every error is attributed to the service it came from. The service is part of the fingerprint, so if several services run the same image, an identical failure in each stays a separate error rather than collapsing into one. Reports and `vigil list-errors` are filterable by service.
 - **Daily**: Runs LLM analysis on new unique errors — reading the relevant source files for context — and renders a styled HTML report with root cause analysis, fix suggestions, error trends, and a diff of what's new vs. resolved since yesterday.
 - **Lifecycle tracking**: Each error has a status (`new` → `analyzed` → `inactive`). Errors not seen in 48 hours are automatically marked inactive. If they reappear, they're re-queued for analysis.
 
@@ -75,7 +76,7 @@ git clone https://github.com/rsorage/vigil
 cd vigil
 cp .env.example .env
 # Edit .env — at minimum set ANTHROPIC_API_KEY, DOCKER_COMPOSE_FILE,
-# DOCKER_SERVICE_NAME, APP_SOURCE_PATH
+# DOCKER_SERVICES, APP_SOURCE_PATH
 uv sync
 mkdir -p logs
 ```
@@ -99,7 +100,7 @@ All configuration is via `.env`. Copy `.env.example` to get started.
 | `OLLAMA_BASE_URL` | Ollama API base URL | `http://localhost:11434` |
 | `OLLAMA_MODEL` | Local model name | `llama3` |
 | `DOCKER_COMPOSE_FILE` | Absolute path to your `docker-compose.prod.yml` | — |
-| `DOCKER_SERVICE_NAME` | Compose service to watch | `api` |
+| `DOCKER_SERVICES` | Comma-separated compose services to watch, e.g. `api,ingestion,worker` | `api` |
 | `APP_SOURCE_PATH` | Host path to your app source code | — |
 | `APP_CONTAINER_PATH` | Container path prefix to strip when mapping tracebacks | `/app` |
 | `ERROR_INACTIVE_AFTER_HOURS` | Hours before unseen errors go inactive | `48` |

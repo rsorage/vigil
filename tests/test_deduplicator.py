@@ -7,9 +7,10 @@ T2 = datetime(2026, 2, 24, 13, 30, 0, tzinfo=timezone.utc)
 T3 = datetime(2026, 2, 24, 14, 0, 0, tzinfo=timezone.utc)
 
 
-def _vitals_event(ts: datetime, cpu_value: str = "147.906") -> LogEvent:
+def _vitals_event(ts: datetime, cpu_value: str = "147.906", service: str = "ingestion") -> LogEvent:
     return LogEvent(
         timestamp=ts,
+        service=service,
         logger_name="app.device_management.infrastructure.mqtt.device_vitals_processor",
         level="ERROR",
         message=f"Error processing device vitals: 1 validation error for DeviceVitalsInput\ncpu_usage\n  Input should be less than or equal to 100 [type=less_than_equal, input_value={cpu_value}, input_type=float]",
@@ -22,6 +23,7 @@ def _vitals_event(ts: datetime, cpu_value: str = "147.906") -> LogEvent:
 def _webhook_event(ts: datetime) -> LogEvent:
     return LogEvent(
         timestamp=ts,
+        service="api",
         logger_name="app.routers.emqx.webhooks",
         level="ERROR",
         message="Unhandled exception in webhook handler",
@@ -83,6 +85,34 @@ class TestDeduplicateFields:
         records = deduplicate([_vitals_event(T1)])
         assert "device_vitals_processor" in records[0].logger_name
 
+    def test_service_preserved(self):
+        records = deduplicate([_vitals_event(T1)])
+        assert records[0].service == "ingestion"
+
+
+class TestDeduplicateAcrossServices:
+    """api, ingestion and worker run the same image — identical failures in
+    different roles must stay separate records."""
+
+    def test_same_error_different_services_kept_separate(self):
+        events = [
+            _vitals_event(T1, service="ingestion"),
+            _vitals_event(T2, service="worker"),
+        ]
+        records = deduplicate(events)
+        assert len(records) == 2
+        assert {r.service for r in records} == {"ingestion", "worker"}
+        assert all(r.occurrence_count == 1 for r in records)
+
+    def test_same_error_same_service_still_collapsed(self):
+        events = [
+            _vitals_event(T1, service="worker"),
+            _vitals_event(T2, service="worker"),
+        ]
+        records = deduplicate(events)
+        assert len(records) == 1
+        assert records[0].occurrence_count == 2
+
 
 class TestNormalization:
     def test_strips_tenant_id(self):
@@ -119,20 +149,25 @@ class TestNormalization:
 
 class TestFingerprint:
     def test_same_inputs_same_fingerprint(self):
-        fp1 = _fingerprint("app.service", "some error", "/app/file.py", 42)
-        fp2 = _fingerprint("app.service", "some error", "/app/file.py", 42)
+        fp1 = _fingerprint("api", "app.service", "some error", "/app/file.py", 42)
+        fp2 = _fingerprint("api", "app.service", "some error", "/app/file.py", 42)
         assert fp1 == fp2
 
     def test_different_logger_different_fingerprint(self):
-        fp1 = _fingerprint("app.service_a", "some error", "/app/file.py", 42)
-        fp2 = _fingerprint("app.service_b", "some error", "/app/file.py", 42)
+        fp1 = _fingerprint("api", "app.service_a", "some error", "/app/file.py", 42)
+        fp2 = _fingerprint("api", "app.service_b", "some error", "/app/file.py", 42)
+        assert fp1 != fp2
+
+    def test_different_service_different_fingerprint(self):
+        fp1 = _fingerprint("api", "app.service", "some error", "/app/file.py", 42)
+        fp2 = _fingerprint("worker", "app.service", "some error", "/app/file.py", 42)
         assert fp1 != fp2
 
     def test_different_line_different_fingerprint(self):
-        fp1 = _fingerprint("app.service", "some error", "/app/file.py", 42)
-        fp2 = _fingerprint("app.service", "some error", "/app/file.py", 99)
+        fp1 = _fingerprint("api", "app.service", "some error", "/app/file.py", 42)
+        fp2 = _fingerprint("api", "app.service", "some error", "/app/file.py", 99)
         assert fp1 != fp2
 
     def test_no_traceback_still_fingerprints(self):
-        fp = _fingerprint("app.service", "generic error message", None, None)
+        fp = _fingerprint("api", "app.service", "generic error message", None, None)
         assert len(fp) == 16

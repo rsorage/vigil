@@ -45,13 +45,22 @@ def _normalize_message(message: str) -> str:
     return normalized
 
 
-def _fingerprint(logger_name: str, message_template: str, file_path: str | None, line_number: int | None) -> str:
+def _fingerprint(
+    service: str,
+    logger_name: str,
+    message_template: str,
+    file_path: str | None,
+    line_number: int | None,
+) -> str:
     """
     SHA-256 fingerprint of the stable parts of an error.
     file_path + line_number are included when available (traceback errors);
     logger_name + message_template cover errors without tracebacks.
+    service keeps the same failure in different roles apart — api, ingestion
+    and worker run the same image, so shared code fails identically in each.
     """
     key = "|".join([
+        service,
         logger_name,
         message_template,
         file_path or "",
@@ -74,7 +83,9 @@ def deduplicate(events: list[LogEvent]) -> list[ErrorRecord]:
 
     for event in events:
         template = _normalize_message(event.message)
-        fp = _fingerprint(event.logger_name, template, event.file_path, event.line_number)
+        fp = _fingerprint(
+            event.service, event.logger_name, template, event.file_path, event.line_number
+        )
 
         if fp in seen:
             existing = seen[fp]
@@ -86,6 +97,7 @@ def deduplicate(events: list[LogEvent]) -> list[ErrorRecord]:
         else:
             seen[fp] = ErrorRecord(
                 fingerprint=fp,
+                service=event.service,
                 logger_name=event.logger_name,
                 message_template=template,
                 sample_traceback=event.traceback,

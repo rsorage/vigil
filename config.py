@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,7 +24,13 @@ class Config(BaseSettings):
 
     # Docker
     docker_compose_file: str = Field(default="docker-compose.prod.yml")
-    docker_service_name: str = Field(default="api")
+
+    # Comma-separated list of compose services to watch, e.g. "api,ingestion,worker".
+    # DOCKER_SERVICE_NAME is accepted as a legacy alias for single-service setups.
+    docker_services: str = Field(
+        default="api",
+        validation_alias=AliasChoices("docker_services", "docker_service_name"),
+    )
 
     # Path mapping between host and container
     app_source_path: str = Field(default="/home/ubuntu/data-fleet-device-hub")
@@ -40,6 +46,11 @@ class Config(BaseSettings):
     # Reporting
     reports_dir: str = Field(default="reports")
     digest_hour: int = Field(default=18)
+
+    @property
+    def service_list(self) -> list[str]:
+        """DOCKER_SERVICES parsed into an ordered list of service names."""
+        return [s.strip() for s in self.docker_services.split(",") if s.strip()]
 
 
 config = Config()

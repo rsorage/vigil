@@ -6,7 +6,7 @@ Runs every hour via cron:
 import logging
 import sys
 
-from analyzer.collector import CollectorError, collect_logs
+from analyzer.collector import CollectorError, collect_all_logs
 from analyzer.deduplicator import deduplicate
 from analyzer.parser import filter_errors, parse_logs
 from analyzer.state_manager import mark_stale_inactive, persist_errors
@@ -26,23 +26,28 @@ def main() -> None:
     db = Database()
     db.initialize()
 
-    # 1. Collect
+    # 1. Collect — one docker compose call per watched service
+    services = config.service_list
     try:
-        raw = collect_logs(
+        raw_by_service = collect_all_logs(
             compose_file=config.docker_compose_file,
-            service_name=config.docker_service_name,
+            services=services,
             since="1h",
         )
     except CollectorError as e:
         logger.error("Log collection failed: %s", e)
         sys.exit(1)
 
-    # 2. Parse → filter errors only
-    events = parse_logs(raw)
-    errors = filter_errors(events)
+    # 2. Parse → filter errors only. Each service is parsed separately so its
+    #    events carry the service they came from into the fingerprint.
+    errors = []
+    for service, raw in raw_by_service.items():
+        errors.extend(filter_errors(parse_logs(raw, service=service)))
 
     if not errors:
-        logger.info("No errors found in this hour's logs")
+        logger.info(
+            "No errors found in this hour's logs (%s)", ", ".join(raw_by_service)
+        )
     else:
         # 3. Deduplicate
         records = deduplicate(errors)

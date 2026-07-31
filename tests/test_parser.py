@@ -134,6 +134,17 @@ class TestDockerPrefix:
         assert error.line_number == 100
 
 
+class TestServiceAttribution:
+    def test_service_stamped_on_every_event(self):
+        events = parse_logs(SAMPLE_LOGS, service="worker")
+        assert events
+        assert all(e.service == "worker" for e in events)
+
+    def test_service_defaults_to_empty(self):
+        events = parse_logs(SAMPLE_LOGS)
+        assert all(e.service == "" for e in events)
+
+
 class TestFilterErrors:
     def test_returns_only_errors(self):
         events = parse_logs(SAMPLE_LOGS)

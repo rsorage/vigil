@@ -121,6 +121,7 @@ def _build_diff(
 def _serialise_error(r: ErrorRecord, sparkline: dict) -> dict:
     return {
         "fingerprint":      r.fingerprint,
+        "service":          r.service,
         "logger_name":      r.logger_name,
         "file_path":        r.file_path,
         "line_number":      r.line_number,
@@ -135,6 +136,25 @@ def _serialise_error(r: ErrorRecord, sparkline: dict) -> dict:
         "analysis":         _analysis_dict(r),
         "sparkline":        sparkline,
     }
+
+
+def _service_breakdown(records: list[ErrorRecord]) -> list[dict]:
+    """
+    Unique-error and occurrence counts per service, busiest first.
+    Drives the per-service filter chips in the digest header.
+    """
+    totals: dict[str, dict] = {}
+    for r in records:
+        entry = totals.setdefault(r.service or "", {"unique": 0, "occurrences": 0})
+        entry["unique"] += 1
+        entry["occurrences"] += r.occurrence_count
+
+    return [
+        {"name": name, **counts}
+        for name, counts in sorted(
+            totals.items(), key=lambda kv: kv[1]["occurrences"], reverse=True
+        )
+    ]
 
 
 def _build_context(
@@ -166,6 +186,7 @@ def _build_context(
     pending  = sum(1 for r in records if r.status == ErrorStatus.NEW)
 
     return {
+        "services":          _service_breakdown(records),
         "report_date":       report_date.isoformat(),
         "generated_at":      datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "errors":            errors,

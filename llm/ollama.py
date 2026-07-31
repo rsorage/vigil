@@ -21,7 +21,10 @@ from a FastAPI application. Analyse the error and respond with ONLY a JSON objec
 
 
 def _build_user_message(error: ErrorRecord, code_context: str | None) -> str:
-    parts = [
+    parts = []
+    if error.service:
+        parts.append(f"Service: {error.service}")
+    parts += [
         f"Logger: {error.logger_name}",
         f"Occurrences: {error.occurrence_count}",
         f"Message:\n{error.message_template}",

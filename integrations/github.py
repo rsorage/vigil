@@ -100,15 +100,18 @@ def _build_body(record: ErrorRecord, analysis) -> str:
             sections.append(_section("Suggested fix", analysis.suggested_fix))
 
     # ── Metadata table ────────────────────────────────────────────────────────
-    rows = [
-        ("Logger", f"`{record.logger_name}`"),
+    rows: list[tuple[str, str]] = []
+    if record.service:
+        rows.append(("Service", f"`{record.service}`"))
+    rows.append(("Logger", f"`{record.logger_name}`"))
+    if record.file_path:
+        rows.append(("File", f"`{record.file_path}:{record.line_number}`"))
+    rows += [
         ("Occurrences", str(record.occurrence_count)),
         ("First seen", str(record.first_seen)[:16] if record.first_seen else "—"),
         ("Last seen",  str(record.last_seen)[:16]  if record.last_seen  else "—"),
         ("Fingerprint", f"`{record.fingerprint}`"),
     ]
-    if record.file_path:
-        rows.insert(1, ("File", f"`{record.file_path}:{record.line_number}`"))
 
     table = "| Field | Value |\n|---|---|\n"
     table += "\n".join(f"| {k} | {v} |" for k, v in rows)

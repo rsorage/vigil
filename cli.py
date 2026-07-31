@@ -3,6 +3,7 @@ Vigil CLI — inspect and manage errors from the terminal.
 
 Commands:
     vigil list-errors                    # list active errors
+    vigil list-errors -s worker          # ...only from one service
     vigil describe-error <prefix>        # full detail for one error
     vigil delete-error <prefix>          # hard-delete a record
     vigil open-issue <prefix>            # open a GitHub issue for an error
@@ -36,6 +37,18 @@ def _get_db() -> Database:
 
 def _status_style(status: str) -> str:
     return {"new": "bold cyan", "analyzed": "bold green", "inactive": "dim"}.get(status, "white")
+
+
+# Stable colour per service so the same role reads the same across commands.
+_SERVICE_STYLES = ("magenta", "cyan", "yellow", "green", "blue")
+
+
+def _service_style(service: str) -> str:
+    if not service:
+        return "dim"
+    ordered = config.service_list
+    index = ordered.index(service) if service in ordered else sum(map(ord, service))
+    return _SERVICE_STYLES[index % len(_SERVICE_STYLES)]
 
 
 def _confidence_style(confidence: str) -> str:
@@ -129,7 +142,8 @@ def cli():
 
 @cli.command("list-errors")
 @click.option("--all", "show_all", is_flag=True, help="Include inactive errors.")
-def list_errors(show_all: bool):
+@click.option("--service", "-s", default=None, help="Only show errors from this service.")
+def list_errors(show_all: bool, service: str | None):
     """List active errors, sorted by occurrence count."""
     db = _get_db()
     if show_all:
@@ -141,8 +155,12 @@ def list_errors(show_all: bool):
     else:
         errors = sorted(db.get_all_active(), key=lambda e: e.occurrence_count, reverse=True)
 
+    if service:
+        errors = [e for e in errors if e.service == service]
+
     if not errors:
-        console.print("[dim]No errors found.[/dim]")
+        suffix = f" for service '{service}'" if service else ""
+        console.print(f"[dim]No errors found{suffix}.[/dim]")
         return
 
     fingerprints = [e.fingerprint for e in errors]
@@ -151,6 +169,7 @@ def list_errors(show_all: bool):
 
     table = Table(box=box.SIMPLE_HEAD, show_header=True, header_style="bold dim", pad_edge=False, expand=True)
     table.add_column("FINGERPRINT", style="dim", width=10, no_wrap=True)
+    table.add_column("SERVICE", width=10, no_wrap=True)
     table.add_column("LOGGER", no_wrap=True, ratio=3)
     table.add_column("COUNT", justify="right", width=7)
     table.add_column("STATUS", width=10)
@@ -169,6 +188,7 @@ def list_errors(show_all: bool):
         last_seen = e.last_seen.strftime("%m-%d %H:%M") if e.last_seen else "—"
         row_cells = [
             e.fingerprint[:8],
+            Text(e.service or "—", style=_service_style(e.service)),
             e.logger_name,
             str(e.occurrence_count),
             Text(e.status.value, style=_status_style(e.status.value)),
@@ -220,6 +240,8 @@ def describe_error(prefix: str, hours: int):
             header.append(f":{record.line_number}", style="cyan")
 
     badges = Text()
+    if record.service:
+        badges.append(f" {record.service} ", style=_service_style(record.service))
     badges.append(f" ×{record.occurrence_count} ", style="bold")
     badges.append(f" {record.status.value} ", style=_status_style(record.status.value))
     if confidence:
@@ -232,6 +254,7 @@ def describe_error(prefix: str, hours: int):
     meta.add_column(style="dim")
     meta.add_column()
     meta.add_row("fingerprint", record.fingerprint)
+    meta.add_row("service",     record.service or "—")
     meta.add_row("first seen",  str(record.first_seen)[:16] if record.first_seen else "—")
     meta.add_row("last seen",   str(record.last_seen)[:16]  if record.last_seen  else "—")
     if record.status == ErrorStatus.INACTIVE and record.resolved_at:
@@ -307,6 +330,7 @@ def delete_error(prefix: str, yes: bool):
 
     console.print()
     console.print(f"  [dim]fingerprint[/dim]  {record.fingerprint}")
+    console.print(f"  [dim]service[/dim]      {record.service or '—'}")
     console.print(f"  [dim]logger[/dim]       {record.logger_name}")
     console.print(f"  [dim]occurrences[/dim]  {record.occurrence_count}")
     console.print()
@@ -345,6 +369,7 @@ def analyze_error(prefix: str, force: bool):
 
     console.print()
     console.print(f"  [dim]fingerprint[/dim]  {record.fingerprint}")
+    console.print(f"  [dim]service[/dim]      {record.service or '—'}")
     console.print(f"  [dim]logger[/dim]       {record.logger_name}")
     if record.file_path:
         console.print(f"  [dim]file[/dim]         {record.file_path}:{record.line_number}")
